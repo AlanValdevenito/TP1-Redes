@@ -2,7 +2,7 @@
 
 Trabajo practico basado en la implementacion de un File Transfer.
 
-## Grupo X
+## Grupo 6
 - **Integrante 1** - [Alan Valdevenito](https://github.com/AlanValdevenito)
 - **Integrante 2** - [Mateo Julián Rico](https://github.com/ricomateo)
 - **Integrante 3** - [Mariana Galdo Martinez](https://github.com/marg30)
