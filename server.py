@@ -34,9 +34,10 @@ class Server:
         self.server_socket.close()
 
     def upload(self):
+        file_name, _ = self.recv()
         file, _ = self.recv()
 
-        with open('result_upload.txt', 'w') as f:
+        with open(file_name, 'w') as f:
           f.write(file)
 
         self.close_socket()

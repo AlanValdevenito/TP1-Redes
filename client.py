@@ -15,22 +15,23 @@ class Client:
     def recv(self):
         return self.socket.recv()
 
-    def upload(self, file_name):
-
+    def upload(self, file_name, src):
         self.send(UPLOAD)
+        self.send(file_name)
 
-        with open(file_name, 'r') as f:
+        with open(src, 'r') as f:
             message = f.read()
             self.send(message)
 
         self.close_socket()
 
-    def download(self):
+    def download(self, name, dst):
         self.send(DOWNLOAD)
+        self.send(name)
 
         file, _ = self.recv()
 
-        with open('result_download.txt', 'w') as f:
+        with open(dst, 'w') as f:
             f.write(file)
 
         self.close_socket()

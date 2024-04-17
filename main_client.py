@@ -24,9 +24,9 @@ def main():
     client = Client(SERVER_NAME, SERVER_PORT)
 
     if args.command == UPLOAD:
-        client.upload(args.name)
+        client.upload(args.name, args.src)
 
     if args.command == DOWNLOAD:
-        client.download(args.name)
+        client.download(args.name, args.dst)
     
 main()
