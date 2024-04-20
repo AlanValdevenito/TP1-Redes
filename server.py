@@ -1,23 +1,31 @@
 from socket_UDP import Socket
+from session import Session
+import queue
 
-MAX_LENGTH = 10 # Envia/recibe MAX_LENGTH bits como maximo
+MAX_LENGTH = 10
+EOF_MARKER = chr(26)
+
 UPLOAD = 'upload'
 DOWNLOAD = 'download'
 ACKNOWLEDGE = 'ACK'
-EOF_MARKER = chr(26)
-
 
 class Server:
     def __init__(self, ip, port, protocol):
         self.port = port
         self.server_socket = Socket(ip, port, protocol, 10)
+        self.send_queue = queue.Queue()
+        self.connections = {}
 
     def start(self):
         self.server_socket.listen()
 
-        type, _ = self.recv()
+        while True:
+            type, address = self.recv()
 
-        self.process_request(type)
+            print(f"Se conecto un cliente {address}")
+            if address not in self.connections:
+                self.connections[address] = Session(type, self.send_queue, address)
+                self.connections[address].start()
 
     def process_request(self, request_type):
         if request_type == UPLOAD:

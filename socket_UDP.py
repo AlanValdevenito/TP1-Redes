@@ -1,8 +1,8 @@
 from socket import *
 import random
 
+MAX_LENGTH = 10
 EOF_MARKER = chr(26)
-MAX_LENGTH = 128 # Envia/recibe MAX_LENGTH bits como maximo
 
 ACKNOWLEDGE = 'ACK'
 
@@ -28,17 +28,20 @@ class Socket:
             current_message = message[sent_bits:sent_bits+MAX_LENGTH]
             
             try:
-                # print(f"\nsend msg: {current_message}")
+                print(f"\nsend msg: {current_message}")
                 print(f"\nsend seq: {sequence_number}")
 
-                rdm = random.randint(0, 9)
+                """rdm = random.randint(0, 9)
                 if rdm < 8:
                     self.socket.sendto(sequence_number.to_bytes(4, 'big', signed=False), address)
                 else:
-                    print("Se pierde el numero de secuencia")
-            
+                    print("Se pierde el numero de secuencia")"""
+
+                self.socket.sendto(sequence_number.to_bytes(4, 'big', signed=False), address)
                 self.socket.sendto(current_message.encode(), address)
+                
                 acknowledge, address = self.socket.recvfrom(MAX_LENGTH)
+
                 if acknowledge.decode() == ACKNOWLEDGE:
                     sent_bits += MAX_LENGTH
 

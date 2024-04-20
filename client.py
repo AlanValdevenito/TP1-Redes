@@ -21,7 +21,6 @@ class Client:
 
         with open(src, 'r', encoding='latin-1') as f:
             message = f.read()
-            print(message)
             self.send(message)
 
         self.close_socket()
