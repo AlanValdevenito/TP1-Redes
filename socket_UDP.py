@@ -2,7 +2,7 @@ from socket import *
 import random
 
 EOF_MARKER = chr(26)
-MAX_LENGTH = 10 # Envia/recibe MAX_LENGTH bits como maximo
+MAX_LENGTH = 128 # Envia/recibe MAX_LENGTH bits como maximo
 
 ACKNOWLEDGE = 'ACK'
 
@@ -28,12 +28,17 @@ class Socket:
             current_message = message[sent_bits:sent_bits+MAX_LENGTH]
             
             try:
-                print(f"send msg: {current_message}")
-                print(f"send seq: {sequence_number}")
-                self.socket.sendto(sequence_number.to_bytes(4, 'big', signed=False), address)
+                # print(f"\nsend msg: {current_message}")
+                print(f"\nsend seq: {sequence_number}")
+
+                rdm = random.randint(0, 9)
+                if rdm < 8:
+                    self.socket.sendto(sequence_number.to_bytes(4, 'big', signed=False), address)
+                else:
+                    print("Se pierde el numero de secuencia")
+            
                 self.socket.sendto(current_message.encode(), address)
                 acknowledge, address = self.socket.recvfrom(MAX_LENGTH)
-                print(acknowledge)
                 if acknowledge.decode() == ACKNOWLEDGE:
                     sent_bits += MAX_LENGTH
 
@@ -45,26 +50,34 @@ class Socket:
 
     def recv(self):
         data = b''
-        previous_sequence_number = -1
+        next_sequence_number = 0
         while True:
             sequence_number, address = self.socket.recvfrom(4)
-            message, address = self.socket.recvfrom(MAX_LENGTH)
-            print(f"recv msg: {message}")
-            print(f"recv seq: {sequence_number}")
-            if sequence_number != previous_sequence_number:
-                data += message
 
-            rdm = random.randint(0, 9)
-            if rdm > 8:
+            if sequence_number != next_sequence_number.to_bytes(4, 'big', signed=False):
+                print(f"recv seq: {int.from_bytes(sequence_number, 'big', signed=False)}")
+                print(f"recv nex seq: {next_sequence_number}\n")
                 continue
+
+            message, address = self.socket.recvfrom(MAX_LENGTH)
+
+            next_sequence_number = next_sequence_number + 1
+            data += message
+
+            print(f"recv seq: {int.from_bytes(sequence_number, 'big', signed=False)}")
+            print(f"recv nex seq: {next_sequence_number}\n")
+
+            """rdm = random.randint(0, 9)
+            if rdm > 8:
+                print("Se pierde el ACK")
+                continue"""
             
-            previous_sequence_number = sequence_number
             self.socket.sendto(ACKNOWLEDGE.encode(), address)
             
             if message.endswith(EOF_MARKER.encode()): 
                 break
         
-        return data.decode()[:-1], address
+        return data.decode(encoding="latin-1")[:-1], address
     
 
     def close(self):

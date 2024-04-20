@@ -14,6 +14,7 @@ class Server:
 
     def start(self):
         self.server_socket.listen()
+
         type, _ = self.recv()
 
         self.process_request(type)
@@ -37,14 +38,14 @@ class Server:
         file_name, _ = self.recv()
         file, _ = self.recv()
 
-        with open(file_name, 'w') as f:
+        with open(file_name, 'w', encoding='latin-1') as f:
           f.write(file)
 
         self.close_socket()
     
     def download(self):
       file_name, clientAddress = self.recv()
-      with open(file_name, 'r') as file:
+      with open(file_name, 'r', encoding='latin-1') as file:
             message = file.read()
             self.send(message, clientAddress)
 

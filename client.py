@@ -19,8 +19,9 @@ class Client:
         self.send(UPLOAD)
         self.send(file_name)
 
-        with open(src, 'r') as f:
+        with open(src, 'r', encoding='latin-1') as f:
             message = f.read()
+            print(message)
             self.send(message)
 
         self.close_socket()
@@ -31,7 +32,7 @@ class Client:
 
         file, _ = self.recv()
 
-        with open(dst, 'w') as f:
+        with open(dst, 'w', encoding='latin-1') as f:
             f.write(file)
 
         self.close_socket()
