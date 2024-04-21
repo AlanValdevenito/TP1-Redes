@@ -36,7 +36,7 @@ class ClientProtocol:
                 #print(f"\nsend seq: {sequence_number}")
 
                 """rdm = random.randint(0, 9)
-                if rdm < 8:
+                if rdm < 5:
                     self.socket.sendto(sequence_number.to_bytes(4, 'big', signed=False), (self.ip, self.port))
                 else:
                     print("Se pierde el numero de secuencia")"""

@@ -1,5 +1,6 @@
 from threading import Thread
 import queue
+import random
 
 UPLOAD = 'upload'
 DOWNLOAD = 'download'
@@ -14,6 +15,8 @@ class Session:
         self.socket_server= socket_server
         self.client_address = address
         self.queue = queue.Queue()
+
+        self.sequence_number = 0
 
     def start(self):
         sessionThread = Thread(target = self.handle_client)
@@ -54,21 +57,38 @@ class Session:
 
     def upload(self):
         file_name = self.queue.get()
-        file = b''
+        data = b''
 
+        next_sequence_number = 0
         while True:
-            seq = self.queue.get()
+            sequence_number = self.queue.get() # 
+            
+            if sequence_number != next_sequence_number.to_bytes(4, 'big', signed=False):
+                #print(f"recv seq {self.client_address}: {int.from_bytes(sequence_number, 'big', signed=False)}")
+                #print(f"recv nex seq{self.client_address}: {next_sequence_number}\n")
+                continue
+
             message = self.queue.get()
-            file += message
+
+            next_sequence_number = next_sequence_number + 1
+            data += message
+
+            #print(f"recv seq{self.client_address}: {int.from_bytes(sequence_number, 'big', signed=False)}")
+            #print(f"recv nex seq{self.client_address}: {next_sequence_number}\n")
+
+            """rdm = random.randint(0, 9)
+            if rdm > 8:
+                print("Se pierde el ACK")
+                continue"""
+
             self.socket_server.send(ACKNOWLEDGE.encode(), self.client_address)
 
             if message.endswith(EOF_MARKER.encode()): 
                 break
 
-        file_decode = file.decode(encoding="latin-1")[:-1]
-        print(file_decode)
+        file = data.decode(encoding="latin-1")[:-1]
 
         with open(file_name, 'w', encoding='latin-1') as f:
-            f.write(file_decode)
+            f.write(file)
 
         #self.close_socket()

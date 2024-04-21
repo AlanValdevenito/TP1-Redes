@@ -19,12 +19,14 @@ class Server:
         
         while True:
             msg, address = self.recv()
+            print(address)
 
             if address not in self.connections:
                 self.connections[address] = Session(msg.decode(), self.server_socket, address)
                 self.connections[address].start()
 
             else:
+                # print(f"msg {address[1]}: {int.from_bytes(msg, 'big', signed=False)}")
                 self.connections[address].queue.put(msg)
 
     def send(self, message, address):

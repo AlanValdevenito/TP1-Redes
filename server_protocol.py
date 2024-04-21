@@ -1,4 +1,6 @@
 from socket import *
+from message import Message
+import pickle
 
 MAX_LENGTH = 10
 
@@ -13,6 +15,8 @@ class ServerProtocol:
         self.socket.bind((self.ip, self.port))
 
     def recv(self):
+        #msg, address = self.socket.recvfrom(MAX_LENGTH)
+        # pickle.loads(msg), address
         return self.socket.recvfrom(MAX_LENGTH)
 
     def send(self, msg, address):
