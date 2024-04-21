@@ -1,11 +1,8 @@
-from socket_UDP import Socket
-
-UPLOAD = 'upload'
-DOWNLOAD = 'download'
+from client_protocol import ClientProtocol
 
 class Client:
     def __init__(self, ip, port):
-        self.socket = Socket(ip, port, 0, 2)
+        self.socket = ClientProtocol(ip, port, 0, 2)
         self.ip = ip
         self.port = port
     
@@ -16,20 +13,14 @@ class Client:
         return self.socket.recv()
 
     def upload(self, file_name, src):
-        self.send(UPLOAD)
-        self.send(file_name)
-
         with open(src, 'r', encoding='latin-1') as f:
             message = f.read()
-            self.send(message)
+            self.socket.upload(message, file_name, (self.ip, self.port))
 
         self.close_socket()
 
     def download(self, name, dst):
-        self.send(DOWNLOAD)
-        self.send(name)
-
-        file, _ = self.recv()
+        file, _ = self.socket.download(name)
 
         with open(dst, 'w', encoding='latin-1') as f:
             f.write(file)
