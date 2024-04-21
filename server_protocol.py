@@ -16,7 +16,7 @@ class ServerProtocol:
         return self.socket.recvfrom(MAX_LENGTH)
 
     def send(self, msg, address):
-        self.socket.sendto(msg.encode(), address)
+        self.socket.sendto(msg, address)
 
     def close(self):
         self.socket.close()

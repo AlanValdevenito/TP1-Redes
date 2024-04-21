@@ -27,12 +27,6 @@ class Server:
             else:
                 self.connections[address].queue.put(msg)
 
-    """def process_request(self, request_type):
-        if request_type == UPLOAD:
-            self.upload()
-        elif request_type == DOWNLOAD:
-            self.download()"""
-
     def send(self, message, address):
         self.server_socket.send(message, address)
 
@@ -41,20 +35,3 @@ class Server:
     
     def close_socket(self):
         self.server_socket.close()
-
-    """def upload(self):
-        file_name, _ = self.recv()
-        file, _ = self.recv()
-
-        with open(file_name, 'w', encoding='latin-1') as f:
-          f.write(file)
-
-        self.close_socket()"""
-    
-    def download(self):
-      file_name, clientAddress = self.recv()
-      with open(file_name, 'r', encoding='latin-1') as file:
-            message = file.read()
-            self.send(message, clientAddress)
-
-      self.close_socket()

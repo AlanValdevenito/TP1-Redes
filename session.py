@@ -4,7 +4,7 @@ import queue
 UPLOAD = 'upload'
 DOWNLOAD = 'download'
 EOF_MARKER = chr(26)
-
+MAX_LENGTH = 10
 ACKNOWLEDGE = 'ACK'
 
 class Session:
@@ -26,8 +26,31 @@ class Session:
         if self.type == UPLOAD:
             self.upload()
         elif self.type == DOWNLOAD:
-            # self.download()
+            self.download()
             pass
+    
+    def download(self):
+        file_name = self.queue.get()
+
+        with open(file_name, 'r', encoding='latin-1') as file:
+            message = file.read()
+
+        if not message.endswith(EOF_MARKER):
+            message += EOF_MARKER
+
+        len_message = len(message)
+        sent_bits = 0
+        sequence_number = 0
+
+        while sent_bits < len_message:
+            current_message = message[sent_bits:sent_bits+MAX_LENGTH]
+            self.socket_server.send(sequence_number.to_bytes(4, 'big', signed=False), self.client_address)
+            self.socket_server.send(current_message.encode(), self.client_address)
+            acknowledge = self.queue.get()
+            
+            if acknowledge.decode() == ACKNOWLEDGE:
+                sent_bits += MAX_LENGTH
+                sequence_number += 1
 
     def upload(self):
         file_name = self.queue.get()
@@ -36,10 +59,8 @@ class Session:
         while True:
             seq = self.queue.get()
             message = self.queue.get()
-
             file += message
-
-            self.socket_server.send(ACKNOWLEDGE, self.client_address)
+            self.socket_server.send(ACKNOWLEDGE.encode(), self.client_address)
 
             if message.endswith(EOF_MARKER.encode()): 
                 break

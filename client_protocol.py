@@ -18,9 +18,9 @@ class ClientProtocol:
     def listen(self):
         self.socket.bind((self.ip, self.port))
 
-    def upload(self, message, file_name, address):
-        self.socket.sendto(UPLOAD.encode(), address)
-        self.socket.sendto(file_name.encode(), address)
+    def upload(self, message, file_name):
+        self.socket.sendto(UPLOAD.encode(), (self.ip, self.port))
+        self.socket.sendto(file_name.encode(), (self.ip, self.port))
 
         if not message.endswith(EOF_MARKER):
             message += EOF_MARKER
@@ -37,14 +37,14 @@ class ClientProtocol:
 
                 """rdm = random.randint(0, 9)
                 if rdm < 8:
-                    self.socket.sendto(sequence_number.to_bytes(4, 'big', signed=False), address)
+                    self.socket.sendto(sequence_number.to_bytes(4, 'big', signed=False), (self.ip, self.port))
                 else:
                     print("Se pierde el numero de secuencia")"""
 
-                self.socket.sendto(sequence_number.to_bytes(4, 'big', signed=False), address)
-                self.socket.sendto(current_message.encode(), address)
+                self.socket.sendto(sequence_number.to_bytes(4, 'big', signed=False), (self.ip, self.port))
+                self.socket.sendto(current_message.encode(), (self.ip, self.port))
 
-                acknowledge, address = self.socket.recvfrom(MAX_LENGTH)
+                acknowledge, (self.ip, self.port) = self.socket.recvfrom(MAX_LENGTH)
 
                 if acknowledge.decode() == ACKNOWLEDGE:
                     sent_bits += MAX_LENGTH
@@ -56,20 +56,20 @@ class ClientProtocol:
                 continue
 
     def download(self, name):
-        self.socket.sendto(DOWNLOAD.encode(), address)
-        self.socket.sendto(name.encode(), address)
+        self.socket.sendto(DOWNLOAD.encode(), (self.ip, self.port))
+        self.socket.sendto(name.encode(), (self.ip, self.port))
         
         data = b''
         next_sequence_number = 0
         while True:
-            sequence_number, address = self.socket.recvfrom(4)
+            sequence_number, (self.ip, self.port) = self.socket.recvfrom(4)
 
             if sequence_number != next_sequence_number.to_bytes(4, 'big', signed=False):
                 #print(f"recv seq: {int.from_bytes(sequence_number, 'big', signed=False)}")
                 #print(f"recv nex seq: {next_sequence_number}\n")
                 continue
 
-            message, address = self.socket.recvfrom(MAX_LENGTH)
+            message, (self.ip, self.port) = self.socket.recvfrom(MAX_LENGTH)
 
             next_sequence_number = next_sequence_number + 1
             data += message
@@ -82,12 +82,12 @@ class ClientProtocol:
                 print("Se pierde el ACK")
                 continue"""
             
-            self.socket.sendto(ACKNOWLEDGE.encode(), address)
+            self.socket.sendto(ACKNOWLEDGE.encode(), (self.ip, self.port))
             
             if message.endswith(EOF_MARKER.encode()): 
                 break
         
-        return data.decode(encoding="latin-1")[:-1], address
+        return data.decode(encoding="latin-1")[:-1], (self.ip, self.port)
     
 
     def close(self):
