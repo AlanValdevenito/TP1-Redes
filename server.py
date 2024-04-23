@@ -1,3 +1,4 @@
+from message import MessageType
 from server_protocol import ServerProtocol
 from socket_rdt import SocketRDT
 
@@ -25,7 +26,10 @@ class Server:
                     self.connections[address].start()
 
                 else:
-                    self.connections[address].queue.put(msg)
+                    if msg.message_type == MessageType.ACK:
+                        self.server_socket.acknowledge(msg.sequence_number, address)
+                    else:
+                        self.connections[address].queue.put(msg)
             except TimeoutError:
                 pass
     

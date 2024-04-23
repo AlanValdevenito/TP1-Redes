@@ -24,19 +24,17 @@ class ServerProtocol:
         self.queue.put(msg)
         
     def handle_client(self):
-        print(self.type)
         if self.type == UPLOAD:
             self.upload()
         elif self.type == DOWNLOAD:
             self.download()
-            pass
     
     def download(self):
         file_name = self.queue.get().data
 
         with open(file_name, 'r', encoding='latin-1') as file:
             message = file.read()
-
+        
         self.socket_server.send(MessageType.DATA, message, self.client_address)
 
     def upload(self):
