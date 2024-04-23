@@ -1,26 +1,62 @@
-from socket import *
-from message import Message
-import pickle
+from threading import Thread
+import queue
+from message import MessageType
 
+UPLOAD = 'upload'
+DOWNLOAD = 'download'
+EOF_MARKER = chr(26)
 MAX_LENGTH = 10
+ACKNOWLEDGE = 'ACK'
 
 class ServerProtocol:
-    def __init__(self, ip, port, protocol, timeout):
-        self.socket = socket(AF_INET, SOCK_DGRAM)
-        self.ip = ip
-        self.port = port
-        self.protocol = protocol
+    def __init__(self, type, socket_server, address):
+        self.type = type
+        self.state = 0
+        self.socket_server = socket_server
+        self.client_address = address
+        self.queue = queue.Queue()
 
-    def listen(self):
-        self.socket.bind((self.ip, self.port))
+    def start(self):
+        sessionThread = Thread(target = self.handle_client)
+        sessionThread.start()
 
-    def recv(self):
-        #msg, address = self.socket.recvfrom(MAX_LENGTH)
-        # pickle.loads(msg), address
-        return self.socket.recvfrom(MAX_LENGTH)
+    def push(self, msg):
+        self.queue.put(msg)
+        
+    def handle_client(self):
+        print(self.type)
+        if self.type == UPLOAD:
+            self.upload()
+        elif self.type == DOWNLOAD:
+            self.download()
+            pass
+    
+    def download(self):
+        file_name = self.queue.get().data
 
-    def send(self, msg, address):
-        self.socket.sendto(msg, address)
+        with open(file_name, 'r', encoding='latin-1') as file:
+            message = file.read()
 
-    def close(self):
-        self.socket.close()
+        self.socket_server.send(MessageType.DATA, message, self.client_address)
+
+    def upload(self):
+        file_name_msg = self.queue.get()
+        file_name = file_name_msg.data
+        next_sequence_number = file_name_msg.sequence_number + 1
+
+        data = b''
+        while True:
+            current_msg = self.queue.get()
+            if current_msg.sequence_number != next_sequence_number:
+                continue
+
+            next_sequence_number = next_sequence_number + 1
+            data += current_msg.data.encode()
+
+            if data.endswith(EOF_MARKER.encode()): 
+                break
+
+        file = data.decode(encoding="latin-1")[:-1]
+
+        with open(file_name, 'w', encoding='latin-1') as f:
+            f.write(file)

@@ -1,7 +1,7 @@
 from server_protocol import ServerProtocol
-from session import Session
+from socket_rdt import SocketRDT
 
-MAX_LENGTH = 10
+MAX_LENGTH = 1024
 EOF_MARKER = chr(26)
 
 UPLOAD = 'upload'
@@ -9,31 +9,25 @@ DOWNLOAD = 'download'
 ACKNOWLEDGE = 'ACK'
 
 class Server:
-    def __init__(self, ip, port, protocol):
+    def __init__(self, ip, port):
         self.port = port
-        self.server_socket = ServerProtocol(ip, port, protocol, 10)
+        self.server_socket = SocketRDT(ip, port, 10)
         self.connections = {}
 
     def start(self):
         self.server_socket.listen()
         
         while True:
-            msg, address = self.recv()
-            print(address)
+            try:
+                msg, address = self.server_socket.recv()
+                if address not in self.connections:
+                    self.connections[address] = ServerProtocol(msg.data, self.server_socket, address)
+                    self.connections[address].start()
 
-            if address not in self.connections:
-                self.connections[address] = Session(msg.decode(), self.server_socket, address)
-                self.connections[address].start()
-
-            else:
-                # print(f"msg {address[1]}: {int.from_bytes(msg, 'big', signed=False)}")
-                self.connections[address].queue.put(msg)
-
-    def send(self, message, address):
-        self.server_socket.send(message, address)
-
-    def recv(self):
-        return self.server_socket.recv()
+                else:
+                    self.connections[address].queue.put(msg)
+            except TimeoutError:
+                pass
     
     def close_socket(self):
         self.server_socket.close()
