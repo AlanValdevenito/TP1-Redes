@@ -1,6 +1,7 @@
 from socket import *
 import pickle
 from threading import Event
+import threading
 from message import Message, MessageType
 
 UPLOAD = 'upload'
@@ -44,7 +45,9 @@ class SocketRDT:
             current_data = data[sent_bits:sent_bits+MAX_LENGTH_DATA]
             message = Message(type, self.sequence_number, current_data)
             try:
+                print(f"SocketRDT.send ({threading.current_thread().name}) - (4.1): Enviamos '{current_data}'")
                 self.socket.sendto(pickle.dumps(message), address)
+                print(f"SocketRDT.send ({threading.current_thread().name}) - (4.2): Esperamos el ACK")
                 self.wait_acknowledge(self.sequence_number, address)   
                 self.sequence_number += 1
                 sent_bits += MAX_LENGTH_DATA

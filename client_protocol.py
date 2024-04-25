@@ -1,5 +1,6 @@
 from socket import *
 from threading import Thread
+import threading
 from socket_rdt import SocketRDT
 from message import MessageType
 import pickle
@@ -20,6 +21,7 @@ class ClientProtocol:
         msg = pickle.loads(ack)
 
         if msg.message_type == MessageType.ACK:
+            print(f"ClientProtocol.acknowledge ({threading.current_thread().name}) - (5): Enviamos un ACK")
             self.socket.acknowledge(msg.sequence_number, address)
             return msg.sequence_number, address
 
@@ -27,10 +29,12 @@ class ClientProtocol:
 
     def upload(self, message, file_name):
         try:
+            print("ClientProtocol.upload (3): Instanciamos tres threads\n")
             th_1 = Thread(target = self.socket.send, args = (MessageType.INSTRUCTION, UPLOAD, self.address))
             th_2 = Thread(target = self.socket.send, args = (MessageType.FILE_NAME, file_name, self.address))
             th_3 = Thread(target = self.socket.send, args = (MessageType.DATA, message, self.address))
             
+            print("ClientProtocol.upload (4): Lanzamos los threads")
             th_1.start()
             self.acknowledge()
             th_1.join()

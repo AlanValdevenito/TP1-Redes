@@ -11,10 +11,14 @@ class Client:
         return self.protocol.recv()
 
     def upload(self, file_name, src):
+        print("Client.upload (1): Abriendo el archivo\n")
+
         with open(src, 'r', encoding='latin-1') as f:
             message = f.read()
+            print("Client.upload (2): Leyendo el archivo e invocando el metodo 'upload' del protocolo\n")
             self.protocol.upload(message, file_name)
 
+        print("Client.upload (6): Terminamos")
         self.close_socket()
 
     def download(self, name, dst):
