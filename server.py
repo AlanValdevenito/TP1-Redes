@@ -21,18 +21,19 @@ class Server:
         while True:
             try:
                 msg, address = self.server_socket.recv()
-                print(f"Server.start: Llega el mensaje '{msg.data}' con numero de secuencia '{msg.sequence_number}'\n")
+                print(f"Llega algo del cliente {address}")
+                #print(f"Server.start: Llega el mensaje '{msg.data}' con numero de secuencia '{msg.sequence_number}'\n")
                 if address not in self.connections:
-                    print(f"Server.start: La direccion {address} no tiene establecida una conexion. La establecemos.\n")
+                    #print(f"Server.start: La direccion {address} no tiene establecida una conexion. La establecemos.\n")
                     self.connections[address] = ServerProtocol(msg.data, self.server_socket, address)
                     self.connections[address].start()
 
                 else:
                     if msg.message_type == MessageType.ACK:
-                        print(f"Server.start: Llega un ACK de '{address}'\n")
+                        #print(f"Server.start: Llega un ACK de '{address}'\n")
                         self.server_socket.acknowledge(msg.sequence_number, address)
                     else:
-                        print(f"Server.start: Guardamos el mensaje en la queue de '{address}'\n")
+                        #print(f"Server.start: Guardamos el mensaje en la queue de '{address}'\n")
                         self.connections[address].queue.put(msg)
             except TimeoutError:
                 pass

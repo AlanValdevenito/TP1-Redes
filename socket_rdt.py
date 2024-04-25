@@ -3,13 +3,14 @@ import pickle
 from threading import Event
 import threading
 from message import Message, MessageType
+import random
 
 UPLOAD = 'upload'
 DOWNLOAD = 'download'
 ACKNOWLEDGE = 'ACK'
 
 MAX_LENGTH = 4096
-MAX_LENGTH_DATA = 2048 # Hay que contemplar los bytes de la estructura
+MAX_LENGTH_DATA = 10 # Hay que contemplar los bytes de la estructura
 EOF_MARKER = chr(26)
 
 class SocketRDT:
@@ -20,7 +21,6 @@ class SocketRDT:
         self.timeout = timeout
         self.socket.settimeout(timeout)
         self.ack_events = {}
-        self.sequence_number = 0 # sirve para un cliente, estaría bueno guardarlo en el protocolo mejor
 
     def listen(self):
         self.socket.bind((self.ip, self.port))
@@ -35,27 +35,35 @@ class SocketRDT:
         self.socket.sendto(ack_msg.encode(), address)
         return decoded_msg, address
 
-    def send(self, type, data, address): # considerar pasar sequence_number como param
+    def send(self, type, data, address, sequence_number):
         sent_bits = 0
         
-        if not data.endswith(EOF_MARKER) and type == MessageType.DATA:
+        if type == MessageType.DATA and not data.endswith(EOF_MARKER):
             data += EOF_MARKER
-        
+    
         len_message = len(data)
 
         while sent_bits < len_message:
             current_data = data[sent_bits:sent_bits+MAX_LENGTH_DATA]
-            message = Message(type, self.sequence_number, current_data)
+            message = Message(type, sequence_number, current_data)
             try:
-                print(f"SocketRDT.send ({threading.current_thread().name}) - (4.1): Enviamos '{current_data}'")
+                print(f"SocketRDT.send ({threading.current_thread().name}) - (4.1): Enviamos")
                 # self.socket.sendto(pickle.dumps(message), address)
-                self.socket.sendto(message.encode(), address)
+
+                rdm = random.randint(0, 9)
+                if rdm < 5:
+                    self.socket.sendto(message.encode(), address)
+                else:
+                    print(f"Perdemos el mensaje {current_data}")
+
                 print(f"SocketRDT.send ({threading.current_thread().name}) - (4.2): Esperamos el ACK")
-                self.wait_acknowledge(self.sequence_number, address)
-                self.sequence_number += 1
+                self.wait_acknowledge(sequence_number, address)
+                sequence_number += 1
                 sent_bits += MAX_LENGTH_DATA
             except TimeoutError:
                 continue
+            
+        return sequence_number
     
     def wait_acknowledge(self, sequence_number, address):
         event = Event()

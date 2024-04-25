@@ -15,6 +15,7 @@ class ServerProtocol:
         self.socket_server = socket_server
         self.client_address = address
         self.queue = queue.Queue()
+        self.sequence_number = 0
 
     def start(self):
         sessionThread = Thread(target = self.handle_client)
@@ -35,7 +36,7 @@ class ServerProtocol:
         with open(file_name, 'r', encoding='latin-1') as file:
             message = file.read()
         
-        self.socket_server.send(MessageType.DATA, message, self.client_address)
+        self.sequence_number = self.socket_server.send(MessageType.DATA, message, self.client_address, self.sequence_number)
 
     def upload(self):
         file_name_msg = self.queue.get()

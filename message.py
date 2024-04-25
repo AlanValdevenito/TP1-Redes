@@ -13,7 +13,6 @@ class Message:
         self.data = data
         self.file_name = "file name"
 
-    # @classmethod
     def encode(self):
         file_name_bytes = self.file_name.encode().ljust(200, b'\0') if self.file_name else b'\0' * 200
         data_bytes = self.data.encode() if self.data else b'\0'

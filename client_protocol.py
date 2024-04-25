@@ -15,6 +15,7 @@ class ClientProtocol:
     def __init__(self, ip, port, timeout):
         self.socket = SocketRDT(ip, port, timeout)
         self.address = (ip, port)
+        self.sequence_number = 0
 
     def acknowledge(self):
         encoded_ack, address = self.socket.socket.recvfrom(MAX_LENGTH)
@@ -28,39 +29,40 @@ class ClientProtocol:
 
         return -1, None
 
+    def wait_for_acks(self, n):
+        i = 0
+        while i < n:
+            try:
+                self.acknowledge()
+                i+=1
+            except TimeoutError:
+                print("Timeout esperando ack")
+
     def upload(self, message, file_name):
         try:
-            print("ClientProtocol.upload (3): Instanciamos tres threads\n")
-            th_1 = Thread(target = self.socket.send, args = (MessageType.INSTRUCTION, UPLOAD, self.address))
-            th_2 = Thread(target = self.socket.send, args = (MessageType.FILE_NAME, file_name, self.address))
-            th_3 = Thread(target = self.socket.send, args = (MessageType.DATA, message, self.address))
+            th_ack = Thread(target = self.wait_for_acks, args = (3,)) # esto está mal xq a lo mejor el send de data toma
+                                                                      # mas de un mensaje
             
-            print("ClientProtocol.upload (4): Lanzamos los threads")
-            th_1.start()
-            self.acknowledge()
-            th_1.join()
+            th_ack.start()
 
-            th_2.start()
-            self.acknowledge()
-            th_2.join()
+            self.sequence_number = self.socket.send(MessageType.INSTRUCTION, UPLOAD, self.address, self.sequence_number)
+            self.sequence_number = self.socket.send(MessageType.FILE_NAME, file_name, self.address, self.sequence_number)
+            self.sequence_number = self.socket.send(MessageType.DATA, message, self.address, self.sequence_number)
+            
+            th_ack.join()
 
-            th_3.start()
-            self.acknowledge()
-            th_3.join()
         except TimeoutError:
             print(f"Timeout")
 
     def download(self, name):
-        th_1 = Thread(target = self.socket.send, args = (MessageType.INSTRUCTION, DOWNLOAD, self.address))
-        th_2 = Thread(target = self.socket.send, args = (MessageType.FILE_NAME, name, self.address))
 
-        th_1.start()
-        self.acknowledge()
-        th_1.join()
+        th_ack = Thread(target = self.wait_for_acks, args = (2,))
+        
+        th_ack.start()
+        self.sequence_number = self.socket.send(MessageType.INSTRUCTION, DOWNLOAD, self.address, self.sequence_number)
+        self.sequence_number = self.socket.send(MessageType.FILE_NAME, name, self.address, self.sequence_number)
 
-        th_2.start()
-        self.acknowledge()
-        th_2.join()
+        th_ack.join()
         
         data = b''
         next_sequence_number = 0
