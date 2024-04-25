@@ -3,7 +3,7 @@ from threading import Thread
 import threading
 from socket_rdt import SocketRDT
 from message import MessageType
-import pickle
+from message import Message
 
 UPLOAD = 'upload'
 DOWNLOAD = 'download'
@@ -17,12 +17,13 @@ class ClientProtocol:
         self.address = (ip, port)
 
     def acknowledge(self):
-        ack, address = self.socket.socket.recvfrom(MAX_LENGTH)
-        msg = pickle.loads(ack)
+        encoded_ack, address = self.socket.socket.recvfrom(MAX_LENGTH)
+        # msg = pickle.loads(ack)
+        msg = Message.decode(encoded_ack)
 
         if msg.message_type == MessageType.ACK:
             print(f"ClientProtocol.acknowledge ({threading.current_thread().name}) - (5): Enviamos un ACK")
-            self.socket.acknowledge(msg.sequence_number, address)
+            self.socket.acknowledge(msg.sequence_number, address) #
             return msg.sequence_number, address
 
         return -1, None

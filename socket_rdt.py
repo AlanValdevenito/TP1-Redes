@@ -26,12 +26,14 @@ class SocketRDT:
         self.socket.bind((self.ip, self.port))
 
     def recv(self):
-        msg, address = self.socket.recvfrom(MAX_LENGTH)
-        msg_object = pickle.loads(msg)
+        encoded_msg, address = self.socket.recvfrom(MAX_LENGTH)
+        # msg_object = pickle.loads(msg)
+        decoded_msg = Message.decode(encoded_msg)
 
-        ack_msg = Message(MessageType.ACK, msg_object.sequence_number, None)
-        self.socket.sendto(pickle.dumps(ack_msg), address)
-        return msg_object, address
+        ack_msg = Message(MessageType.ACK, decoded_msg.sequence_number, None)
+        # self.socket.sendto(pickle.dumps(ack_msg), address)
+        self.socket.sendto(ack_msg.encode(), address)
+        return decoded_msg, address
 
     def send(self, type, data, address): # considerar pasar sequence_number como param
         sent_bits = 0
@@ -46,9 +48,10 @@ class SocketRDT:
             message = Message(type, self.sequence_number, current_data)
             try:
                 print(f"SocketRDT.send ({threading.current_thread().name}) - (4.1): Enviamos '{current_data}'")
-                self.socket.sendto(pickle.dumps(message), address)
+                # self.socket.sendto(pickle.dumps(message), address)
+                self.socket.sendto(message.encode(), address)
                 print(f"SocketRDT.send ({threading.current_thread().name}) - (4.2): Esperamos el ACK")
-                self.wait_acknowledge(self.sequence_number, address)   
+                self.wait_acknowledge(self.sequence_number, address)
                 self.sequence_number += 1
                 sent_bits += MAX_LENGTH_DATA
             except TimeoutError:
@@ -62,9 +65,11 @@ class SocketRDT:
         del self.ack_events[(sequence_number, address)] # elimino el evento del diccionario
 
     def acknowledge(self, seq, address):
-        event = self.ack_events.get((seq, address))
-        if event:
-            event.set()
+        while True:
+            event = self.ack_events.get((seq, address))
+            if event:
+                event.set()
+                return
         
     def close(self):
         self.socket.close()
