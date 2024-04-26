@@ -1,8 +1,10 @@
 from client_protocol import ClientProtocol
+from gbn import GBN
 
 class Client:
     def __init__(self, ip, port):
         self.protocol = ClientProtocol(ip, port, 0.5)
+        self.gbn = GBN(ip, port, 0.5)
     
     def send(self, message):
         self.protocol.send(message)

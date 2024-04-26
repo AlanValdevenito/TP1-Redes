@@ -32,7 +32,7 @@ class Server:
                     if msg.message_type == MessageType.ACK:
                         print(f"Server.start: Recibimos un ACK de {address}")
                         self.server_socket.acknowledge(msg.sequence_number, address)
-                    else:
+                    elif address in self.connections: # Es necesario el elif?
                         print(f"Server.start: Guardamos el mensaje en la queue de '{address}'\n")
                         self.connections[address].queue.put(msg)
             except TimeoutError:

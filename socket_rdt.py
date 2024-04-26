@@ -1,7 +1,5 @@
 from socket import *
-import pickle
 from threading import Event
-import threading
 from message import Message, MessageType
 import random
 
