@@ -13,10 +13,11 @@ ACKNOWLEDGE = 'ACK'
 
 class ClientProtocol:
     def __init__(self, ip, port, timeout):
-        self.socket = SocketRDT(ip, port, timeout)
+        self.socket = SocketRDT(ip, port, timeout, False)
         self.address = (ip, port)
         self.sequence_number = 0
 
+    """
     def acknowledge(self):
         encoded_ack, address = self.socket.socket.recvfrom(MAX_LENGTH)
         # msg = pickle.loads(ack)
@@ -37,46 +38,53 @@ class ClientProtocol:
                 i+=1
             except TimeoutError:
                 print("Timeout esperando ack")
+    """
 
     def upload(self, message, file_name):
-        try:
+        self.sequence_number = self.socket.send(MessageType.INSTRUCTION, UPLOAD, self.address, self.sequence_number)
+        self.sequence_number = self.socket.send(MessageType.FILE_NAME, file_name, self.address, self.sequence_number)
+        self.sequence_number = self.socket.send(MessageType.DATA, message, self.address, self.sequence_number)
+
+        """try:
             th_ack = Thread(target = self.wait_for_acks, args = (3,)) # esto está mal xq a lo mejor el send de data toma
                                                                       # mas de un mensaje
             
             th_ack.start()
 
             self.sequence_number = self.socket.send(MessageType.INSTRUCTION, UPLOAD, self.address, self.sequence_number)
+            
             self.sequence_number = self.socket.send(MessageType.FILE_NAME, file_name, self.address, self.sequence_number)
             self.sequence_number = self.socket.send(MessageType.DATA, message, self.address, self.sequence_number)
             
             th_ack.join()
 
         except TimeoutError:
-            print(f"Timeout")
+            print(f"Timeout")"""
 
     def download(self, name):
-
-        th_ack = Thread(target = self.wait_for_acks, args = (2,))
-        
-        th_ack.start()
+        print("ClientProtocol.download: Enviando DOWNLOAD\n")
         self.sequence_number = self.socket.send(MessageType.INSTRUCTION, DOWNLOAD, self.address, self.sequence_number)
+        print("ClientProtocol.download: Enviando el nombre del archivo\n")
         self.sequence_number = self.socket.send(MessageType.FILE_NAME, name, self.address, self.sequence_number)
-
-        th_ack.join()
         
         data = b''
-        next_sequence_number = 0
+        next_sequence_number = 0 #
         while True:
-            msg_obj, _ = self.socket.recv()
+            try:
+                msg_obj, _ = self.socket.recv()
+                print(f"ClientProtocol.download: Recibimos {msg_obj.data}")
 
-            if msg_obj.message_type != MessageType.DATA or msg_obj.sequence_number != next_sequence_number:
-                continue
+                if msg_obj.message_type != MessageType.DATA or msg_obj.sequence_number != next_sequence_number:
+                    continue
 
-            data += msg_obj.data.encode()
-            next_sequence_number = next_sequence_number + 1
-            
-            if data.endswith(EOF_MARKER.encode()): 
-                break
+                data += msg_obj.data.encode()
+                next_sequence_number = next_sequence_number + 1
+                
+                if data.endswith(EOF_MARKER.encode()): 
+                    break
+                
+            except TimeoutError:
+                print("Timeout")
         
         return data.decode(encoding="latin-1")[:-1]
 

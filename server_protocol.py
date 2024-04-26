@@ -5,8 +5,6 @@ from message import MessageType
 UPLOAD = 'upload'
 DOWNLOAD = 'download'
 EOF_MARKER = chr(26)
-MAX_LENGTH = 10
-ACKNOWLEDGE = 'ACK'
 
 class ServerProtocol:
     def __init__(self, type, socket_server, address):
