@@ -15,14 +15,6 @@ class Message:
         self.data = data
         self.file_name = "-"
 
-    def print(self):
-        
-        print(f"message_type = {self.message_type}")
-        print(f"sequence_number = {self.sequence_number}")
-        print(f"data = {self.data}")
-        print(f"file_name = {self.file_name}")
-        print("--------------------------\n\n")
-        
     def encode(self):
         file_name_bytes = self.file_name.encode().ljust(10, b'\0') if self.file_name else b'\0' * 10
         data_bytes = self.data.encode()
@@ -42,3 +34,12 @@ class Message:
         data_length = int.from_bytes(bytes_arr[15:19], byteorder='big')
         data = bytes_arr[19:19 + data_length].decode()
         return Message(message_type, sequence_number, data)
+    
+    def __str__(self):
+        return f"\n--------------------------\
+                \nmessage_type = {self.message_type}\
+                \nsequence_number = {self.sequence_number}\
+                \ndata = [{self.data}]\
+                \nfile_name = {self.file_name}\
+                \n--------------------------"
+
