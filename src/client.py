@@ -1,4 +1,5 @@
-from protocol import StopAndWaitProtocol
+from stopandwait import StopAndWaitProtocol
+from gbn import GBN
 from message import *
 from download_handler import *
 from upload_handler import *
@@ -9,7 +10,8 @@ class Client:
     def __init__(self, ip, port):
         self.ip = ip
         self.port = port
-        self.protocol = StopAndWaitProtocol(ip, port)
+        # self.protocol = StopAndWaitProtocol(ip, port)
+        self.protocol = GBN(ip, port)
 
     # Manda al server un request para hacer upload.
     # Se recibe el puerto del thread uploadHandler
@@ -29,9 +31,10 @@ class Client:
         - file_name: Nombre del archivo que se creara y donde se guardara el archivo subido.
         - server_address: Direccion del servidor. Es una tupla (IP, PORT).
         """
-
-        request = Message(MessageType.INSTRUCTION, 0, UPLOAD)
+        sequence_number = 0
+        request = Message(MessageType.INSTRUCTION, sequence_number, UPLOAD)
         self.protocol.send_data(request, server_address) # mando un request para hacer upload
+        sequence_number += 1
         msg, address = self.protocol.recv_data()  # recibo el nuevo port
 
         if msg.message_type == MessageType.PORT:
@@ -48,7 +51,6 @@ class Client:
             total = len(data)
             sent_bytes = 0
             
-            sequence_number = 0
             while sent_bytes < total:
                 current_data = data[sent_bytes:sent_bytes + MAX_LENGTH]
                 message = Message(MessageType.DATA, sequence_number, current_data)

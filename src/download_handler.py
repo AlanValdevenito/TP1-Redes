@@ -1,4 +1,4 @@
-from protocol import *
+from stopandwait import *
 from threading import Thread
 from message import *
 
@@ -25,7 +25,8 @@ class DownloadHandler:
         self.protocol.listen()
 
         port = self.protocol.get_port()
-        port_msg = Message(MessageType.PORT, 0, str(port))
+        sequence_number = 0
+        port_msg = Message(MessageType.PORT, sequence_number, str(port))
         self.protocol.send_data(port_msg, self.client_address) # Le mando mi puerto al cliente
         
         filename_msg, address = self.protocol.recv_data() # Recibo el nombre del archivo a descargar
@@ -38,7 +39,7 @@ class DownloadHandler:
             total = len(data)
             sent_bytes = 0
             
-            sequence_number = 0
+            
             while sent_bytes < total:
                 current_data = data[sent_bytes:sent_bytes + MAX_LENGTH]
                 message = Message(MessageType.DATA, sequence_number, current_data)

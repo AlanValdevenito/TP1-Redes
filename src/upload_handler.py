@@ -1,4 +1,5 @@
-from protocol import *
+from stopandwait import *
+from gbn import GBN
 from threading import Thread
 from message import *
 
@@ -21,7 +22,8 @@ class UploadHandler:
 
         Se encarga de recibir los paquetes del archivo y reconstruirlo.
         """
-        self.protocol = StopAndWaitProtocol("127.0.0.1", 0)
+        # self.protocol = StopAndWaitProtocol("127.0.0.1", 0)
+        self.protocol = GBN(self.client_address[0], 0)
         self.protocol.listen()
     
         port = self.protocol.get_port() 
@@ -30,12 +32,10 @@ class UploadHandler:
 
         next_seq_number = 0
 
-        while True:
-            filename_msg, _ = self.protocol.recv_data() # Recibo el nombre del archivo
+        filename_msg, _ = self.protocol.recv_data() # Recibo el nombre del archivo
 
-            if filename_msg.message_type == MessageType.FILE_NAME:
-                filename = filename_msg.data
-                break
+        if filename_msg.message_type == MessageType.FILE_NAME:
+            filename = filename_msg.data
 
         # UnboundLocalError: local variable 'filename' referenced before assignment
         with open(filename, 'w', encoding='latin-1') as f: # Creo el archivo y recibo la data
@@ -44,10 +44,11 @@ class UploadHandler:
                     msg, _ = self.protocol.recv_data()
 
                     if msg.message_type == MessageType.END:
+                        print("llega el END, break")
                         break
 
-                    if msg.sequence_number != next_seq_number or msg.message_type != MessageType.DATA:
-                        continue
+                    # if msg.sequence_number != next_seq_number or msg.message_type != MessageType.DATA:
+                    #     continue
 
                     f.write(msg.data)
                     next_seq_number += 1

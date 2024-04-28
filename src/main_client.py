@@ -1,4 +1,4 @@
-from protocol import StopAndWaitProtocol
+from stopandwait import StopAndWaitProtocol
 from message import *
 from client import Client
 import argparse

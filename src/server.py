@@ -1,4 +1,5 @@
-from protocol import StopAndWaitProtocol
+from stopandwait import StopAndWaitProtocol
+from gbn import GBN
 from message import *
 from download_handler import *
 from upload_handler import *
@@ -7,7 +8,7 @@ class Server:
     def __init__(self, ip, port):
         self.ip = ip
         self.port = port
-        self.protocol = StopAndWaitProtocol(ip, port)
+        self.protocol = GBN(ip, port)
         self.sessions = []
 
     def start(self):

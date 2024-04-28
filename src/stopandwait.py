@@ -11,6 +11,9 @@ class StopAndWaitProtocol:
         self.socket = socket(AF_INET, SOCK_DGRAM)
         self.ip = ip
         self.port = port
+        self.previous_sequence_number = -1
+        self.last_message_address = None
+        self.allows_duplicates = False
 
     def listen(self):
         self.socket.bind((self.ip, self.port))
@@ -31,16 +34,17 @@ class StopAndWaitProtocol:
 
         encoded_msg = message.encode()
         msg_acked = False
-        
+        end_count = 0
         count = 0
         while not msg_acked:
             try:
-                if count >= 10:
+                if end_count >= 10 or count == 10:
+                    # puedo tirar un error de conexion o algo asi
                     break
 
                 rdm = random.randint(0, 9)
-                if rdm < 8:
-                    print(colored(f"Sending [{message.data}] to {address}\n", "green"))
+                if rdm < 5:
+                    print(colored(f"Sending {message}\nto {address}\n", "green"))
                     self.socket.sendto(encoded_msg, address)
                 else:
                     # puede darse el caso de que el que esta mandando el archivo
@@ -51,33 +55,23 @@ class StopAndWaitProtocol:
                     # es probable que el receiver se haya desconectado
                     # en tal caso salgo del send_data
                     if message.message_type == MessageType.END:
-                        count += 1
+                        end_count += 1
                         print(colored("Se perdio el END\n", "red"))
                     else:
                         print(colored(f"Se perdio la data [{message.data}]\n", "red"))
 
-                self.socket.settimeout(0.05)
+                self.socket.settimeout(0.0001)
                 msg_acked = self.recv_ack(message.sequence_number)
-                
+
             except TimeoutError:
                 continue
-
+            count += 1
+            
         self.socket.setblocking(True)
 
     # Private
     def recv_ack(self, seq_number):
-        """
-        Recibe un ACK y verifica que el numero de secuencia sea el correcto.
-
-        Parametros:
-        - seq_number: Numero de secuencia del ultimo mensaje enviado.
-
-        Devuelve:
-        - True: El numero de secuencia es correcto.
-        - False: El numero de secuencia no es correcto.
-        """
-
-        encoded_msg, _ = self.socket.recvfrom(1024)
+        encoded_msg, _ = self.socket.recvfrom(MAX_LENGTH * 2)
         msg = Message.decode(encoded_msg)
 
         if msg.sequence_number != seq_number:

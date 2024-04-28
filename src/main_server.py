@@ -1,4 +1,4 @@
-from protocol import StopAndWaitProtocol
+from stopandwait import StopAndWaitProtocol
 from message import *
 from upload_handler import *
 from download_handler import *
