@@ -35,8 +35,10 @@ class UploadHandler:
                     msg.print()
                     if msg.message_type == MessageType.END:
                         break
-                    if msg.sequence_number != next_seq_number or msg.message_type != MessageType.DATA:
+                    if msg.message_type != MessageType.DATA:
                         continue
+                    #if msg.sequence_number != next_seq_number:
+                    #    continue
                     data = msg.data
                     msg.print()
                     print(f"recibo msg: [{msg.data}]")

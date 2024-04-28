@@ -18,22 +18,24 @@ class Client:
     # Se manda toda la data del archivo
     # Se manda un Message END para indicar que termino el upload
     def upload(self, filename, address):
-        request = Message(MessageType.INSTRUCTION, 0, "upload")
+        sequence_number = 0
+        request = Message(MessageType.INSTRUCTION, sequence_number, "upload")
         server_address = address
         self.protocol.send_data(request, server_address) # mando un request para hacer upload
+        sequence_number += 1
         msg, address = self.protocol.recv_data()  # recibo el nuevo port
         if msg.message_type == MessageType.PORT:
             new_port = int(msg.data)
             print(f"new_port = {new_port}")
         server_address = ("127.0.0.1", int(new_port))
-        filename_msg = Message(MessageType.FILE_NAME, 0, "upload_result.txt")
+        filename_msg = Message(MessageType.FILE_NAME, sequence_number, "upload_result.txt")
         self.protocol.send_data(filename_msg, server_address)  # mando el nombre del archivo que voy a mandar al nuevo port
-        with open("hola.txt", 'r', encoding='latin-1') as f: # mando todo
+        sequence_number += 1
+        with open("output.txt", 'r', encoding='latin-1') as f: # mando todo
             data = f.read()
             total = len(data)
             sent_bytes = 0
             
-            sequence_number = 0
             while sent_bytes < total:
                 current_data = data[sent_bytes:sent_bytes + MAX_LENGTH]
                 print(f"mando data: [{current_data}]")
@@ -51,17 +53,20 @@ class Client:
     # Se manda toda la data del archivo
     # Se manda un Message END para indicar que termino el upload
     def download(self, filename, address):
-        request = Message(MessageType.INSTRUCTION, 0, "download")
+        sequence_number = 0
+        request = Message(MessageType.INSTRUCTION, sequence_number, "download")
         server_address = address
         self.protocol.send_data(request, server_address) # mando un request de download al server
+        sequence_number += 1
         msg, address = self.protocol.recv_data()         # recibo el puerto del que recibo la data 
         if msg.message_type == MessageType.PORT:
             new_port = int(msg.data)
             print(f"new_port = {new_port}")
         server_address = ("127.0.0.1", int(new_port))
-        filename_msg = Message(MessageType.FILE_NAME, 0, "hola.txt")
+        filename_msg = Message(MessageType.FILE_NAME, sequence_number, "output.txt")
         self.protocol.send_data(filename_msg, server_address) # mando el archivo que quiero descargar al nuevo puerto
-        next_seq_number = 0
+        sequence_number += 1
+        #next_seq_number = 0
         with open("download_result.txt", 'w', encoding='latin-1') as f:
             while True:
                 try:
@@ -69,14 +74,14 @@ class Client:
                     msg.print()
                     if msg.message_type == MessageType.END:
                         break
-                    if msg.sequence_number < next_seq_number:
+                    #if msg.sequence_number < next_seq_number:
                         # por si llego un mensaje repetido
-                        continue
+                    #    continue
                     data = msg.data
                     msg.print()
                     print(f"recibo msg: [{msg.data}]")
                     f.write(data)
-                    next_seq_number += 1
+                    #next_seq_number += 1
                 except TimeoutError:
                     self.protocol.socket.settimeout(10)
                     continue

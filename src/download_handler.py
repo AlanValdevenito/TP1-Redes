@@ -21,9 +21,11 @@ class DownloadHandler:
         self.protocol = StopAndWaitProtocol("127.0.0.1", 0)
         self.protocol.listen()
         port = self.protocol.get_port()
-        port_msg = Message(MessageType.PORT, 0, str(port))
+        sequence_number = 0
+        port_msg = Message(MessageType.PORT, sequence_number, str(port))
         print(f"uploadHandler: mando nuevo port = {port}")
         self.protocol.send_data(port_msg, self.client_address)   # le mando mi puerto al cliente
+        sequence_number += 1
         filename_msg, address = self.protocol.recv_data()        # recibo el nombre del archivo a descargar
         if filename_msg.message_type == MessageType.FILE_NAME:   
             filename = filename_msg.data
@@ -34,7 +36,7 @@ class DownloadHandler:
             total = len(data)
             sent_bytes = 0
             
-            sequence_number = 0
+            
             while sent_bytes < total:
                 current_data = data[sent_bytes:sent_bytes + MAX_LENGTH]
                 print(f"mando data: [{current_data}]")

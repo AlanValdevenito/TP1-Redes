@@ -1,7 +1,7 @@
 from socket import *
 from message import *
 import random
-MAX_LENGTH = 64
+MAX_LENGTH = 1024
 
 
 from termcolor import colored # pa los print
@@ -14,6 +14,9 @@ class StopAndWaitProtocol:
         self.socket = socket(AF_INET, SOCK_DGRAM)
         self.ip = ip
         self.port = port
+        self.previous_sequence_number = -1
+        self.last_message_address = None
+        self.allows_duplicates = False
 
     def listen(self):
         self.socket.bind((self.ip, self.port))
@@ -28,10 +31,12 @@ class StopAndWaitProtocol:
         print(f"sending data to address = {address}")
         encoded_msg = message.encode()
         msg_acked = False
+        end_count = 0
         count = 0
         while not msg_acked:
             try:
-                if count >= 10:
+                if end_count >= 10 or count == 10:
+                    # puedo tirar un error de conexion o algo asi
                     break
                 rdm = random.randint(0, 9)
                 if rdm < 8:
@@ -45,15 +50,16 @@ class StopAndWaitProtocol:
                     # es probable que el receiver se haya desconectado
                     # en tal caso salgo del send_data
                     if message.message_type == MessageType.END:
-                        count += 1
+                        end_count += 1
                         print(colored("se perdio el END", "red"))
                     else:
                         print(colored("se perdio la data", "red"))
-                self.socket.settimeout(0.05)
+                self.socket.settimeout(0.0001)
                 msg_acked = self.recv_ack(message.sequence_number)
-                
+
             except TimeoutError:
                 continue
+            count += 1
         self.socket.setblocking(True)
 
 
@@ -61,7 +67,7 @@ class StopAndWaitProtocol:
     # Recibe un ack, devuelve True si coincide el seq_number,
     # devuelve False en caso contrario
     def recv_ack(self, seq_number):
-        encoded_msg, _ = self.socket.recvfrom(1024)
+        encoded_msg, _ = self.socket.recvfrom(MAX_LENGTH * 2)
         msg = Message.decode(encoded_msg)
         if msg.sequence_number != seq_number:
             print(colored(f"NO COINCIDE EL SEQNUM. expected = {seq_number}, got = {msg.sequence_number}", "red"))
@@ -79,12 +85,34 @@ class StopAndWaitProtocol:
     
     # Recibe data, manda el correspondiente ACK y devuelve la data
     # en forma de Message
+    # 
+    # Se le podria agregar un chequeo del sequence number en caso
+    # de que el mensaje recibido sea DATA, para que si llegu
     def recv_data(self):
-        encoded_msg, address = self.socket.recvfrom(1024)
-        #self.socket.settimeout(0.1)
+        encoded_msg, address = self.socket.recvfrom(MAX_LENGTH * 2)
         msg = Message.decode(encoded_msg)
         self.send_ack(msg.sequence_number, address)
+        
+
+        # puedo recibir 2 mensajes con el mismo sequence number pero de distintos senders,
+        # en ese caso no serian mensajes repetidos
+        #
+        # Si recibo 2 mensajes con el mismo sequence number y mismo address, entonces
+        # es un mensaje repetido.
+        while msg.sequence_number == self.previous_sequence_number and address == self.last_message_address and not self.allow_duplicates:
+            print(colored("recibi un packet repetido", "red"))
+            encoded_msg, address = self.socket.recvfrom(MAX_LENGTH * 2)
+            msg = Message.decode(encoded_msg)
+            self.send_ack(msg.sequence_number, address)
+        self.previous_sequence_number = msg.sequence_number
+        self.last_message_address = address
         return msg, address
     
+    # permite recibir mensajes duplicados
+    # se utiliza en el thread principal del server, para el caso en el
+    # que se pierde el ACK del request.
+    def allow_duplicates(self):
+        self.allows_duplicates = True
+
     def close(self):
         self.socket.close()

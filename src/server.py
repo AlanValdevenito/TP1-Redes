@@ -18,6 +18,7 @@ class Server:
 
     def start(self):
         self.protocol.listen()
+        self.protocol.allow_duplicates()
         self.protocol.socket.setblocking(True)
 
         while True:
