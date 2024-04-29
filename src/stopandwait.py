@@ -2,12 +2,12 @@ from socket import *
 from message import *
 import random
 
-MAX_LENGTH = 64
+MAX_LENGTH = 32
 
 from termcolor import colored # pa los print
 
 class StopAndWaitProtocol:
-    def __init__(self, ip, port):
+    def __init__(self, ip, port, client_address):
         self.socket = socket(AF_INET, SOCK_DGRAM)
         self.ip = ip
         self.port = port
@@ -15,9 +15,11 @@ class StopAndWaitProtocol:
         self.last_message_address = None
         self.allows_duplicates = False
 
+        self.client_address = client_address
+
     def listen(self):
         self.socket.bind((self.ip, self.port))
-        print(f"Socket bindeado en {(self.ip, self.port)}\n")
+        print(f"Socket bindeado en {self.socket.getsockname()}\n")
 
     def get_port(self):
         return self.socket.getsockname()[1]
@@ -42,6 +44,9 @@ class StopAndWaitProtocol:
                     # puedo tirar un error de conexion o algo asi
                     break
 
+                """print(colored(f"Sending {message}\nto {address}\n", "green"))
+                self.socket.sendto(encoded_msg, address)"""
+
                 rdm = random.randint(0, 9)
                 if rdm < 5:
                     print(colored(f"Sending {message}\nto {address}\n", "green"))
@@ -58,9 +63,10 @@ class StopAndWaitProtocol:
                         end_count += 1
                         print(colored("Se perdio el END\n", "red"))
                     else:
-                        print(colored(f"Se perdio la data [{message.data}]\n", "red"))
+                        print(colored(f"Lost {message}\nto {address}\n", "red"))
 
-                self.socket.settimeout(0.0001)
+                self.socket.settimeout(1)
+                print(colored(f"Esperando ACK de {self.client_address}\n", "yellow"))
                 msg_acked = self.recv_ack(message.sequence_number)
 
             except TimeoutError:
@@ -71,7 +77,7 @@ class StopAndWaitProtocol:
 
     # Private
     def recv_ack(self, seq_number):
-        encoded_msg, _ = self.socket.recvfrom(MAX_LENGTH * 2)
+        encoded_msg, address = self.socket.recvfrom(MAX_LENGTH)
         msg = Message.decode(encoded_msg)
 
         if msg.sequence_number != seq_number:
@@ -79,9 +85,9 @@ class StopAndWaitProtocol:
             print(colored(f"Expected = {seq_number}", "red"))
             print(colored(f"Got = {msg.sequence_number}\n", "red"))
 
-        print(colored("Llega un ACK. Coincide el numero de secuencia:", "green"))
-        print(colored(f"Expected = {seq_number}", "green"))
-        print(colored(f"Got = {msg.sequence_number}\n", "green"))
+        print(colored("Llega un ACK. Coincide el numero de secuencia:", "yellow"))
+        print(colored(f"Expected = {seq_number}", "yellow"))
+        print(colored(f"Got = {msg.sequence_number}\n", "yellow"))
         return msg.sequence_number == seq_number
     
     def recv_data(self):
@@ -92,12 +98,12 @@ class StopAndWaitProtocol:
         - Una tupla con una instancia de Message con los datos recibidos y la direccion desde donde fue enviado.
         """
 
-        encoded_msg, address = self.socket.recvfrom(1024)
-        #self.socket.settimeout(0.1)
+        encoded_msg, _ = self.socket.recvfrom(MAX_LENGTH*2) # Si no multiplicamos MAX_LENGTH no se recibe toda la data
         msg = Message.decode(encoded_msg)
-        self.send_ack(msg.sequence_number, address)
-        print(colored(f"Receiving {msg}\nfrom {address}\n", "green"))
-        return msg, address
+
+        self.send_ack(msg.sequence_number, self.client_address)
+        print(colored(f"Receiving {msg}\nfrom {self.client_address}\n", "green"))
+        return msg, self.client_address
     
     # Private
     def send_ack(self, seq_number, address):
@@ -110,11 +116,13 @@ class StopAndWaitProtocol:
         """
 
         ack = Message(MessageType.ACK, seq_number, "")
+        """self.socket.sendto(ack.encode(), address)
+        print(colored(f"Se envia el ACK a {address} con el numero de secuencia {seq_number}\n", "yellow"))"""
 
         rdm = random.randint(0, 9)
         if rdm < 5:
             self.socket.sendto(ack.encode(), address)
-            print(colored(f"Se envia el ACK con el numero de secuencia {seq_number}\n", "green"))
+            print(colored(f"Se envia el ACK a {address} con el numero de secuencia {seq_number}\n", "yellow"))
         else:
             print(colored(f"Se perdio el ACK con el numero de secuencia {seq_number}\n", "red"))
     

@@ -10,14 +10,9 @@ class Client:
     def __init__(self, ip, port):
         self.ip = ip
         self.port = port
-        # self.protocol = StopAndWaitProtocol(ip, port)
-        self.protocol = GBN(ip, port)
+        self.protocol = StopAndWaitProtocol(ip, port, (ip, port))
+        # self.protocol = GBN(ip, port, (ip, port))
 
-    # Manda al server un request para hacer upload.
-    # Se recibe el puerto del thread uploadHandler
-    # Se manda el nombre del archivo al handler a traves del puerto que nos mando
-    # Se manda toda la data del archivo
-    # Se manda un Message END para indicar que termino el upload
     def upload(self, file_source, file_name, server_address):
         """
         Primero envia al servidor un pedido para hacer upload. Como respuesta a este 
@@ -34,14 +29,6 @@ class Client:
         sequence_number = 0
         request = Message(MessageType.INSTRUCTION, sequence_number, UPLOAD)
         self.protocol.send_data(request, server_address) # mando un request para hacer upload
-        sequence_number += 1
-        msg, address = self.protocol.recv_data()  # recibo el nuevo port
-
-        if msg.message_type == MessageType.PORT:
-            new_port = int(msg.data)
-            print(f"Change port to {new_port}\n")
-        
-        server_address = (self.ip, int(new_port))
 
         filename_msg = Message(MessageType.FILE_NAME, 0, file_name)
         self.protocol.send_data(filename_msg, server_address)  # mando el nombre del archivo que voy a mandar al nuevo port
@@ -84,16 +71,10 @@ class Client:
         request = Message(MessageType.INSTRUCTION, 0, "download")
         self.protocol.send_data(request, server_address) # Mando un request de download al server
 
-        msg, _ = self.protocol.recv_data() # Recibo el puerto del que recibo la data 
-
-        if msg.message_type == MessageType.PORT:
-            new_port = int(msg.data)
-            print(f"Change port to {new_port}\n")
-
-        server_address = (self.ip, int(new_port))
-
         filename_msg = Message(MessageType.FILE_NAME, 0, file_name)
         self.protocol.send_data(filename_msg, server_address) # Mando el archivo que quiero descargar al nuevo puerto
+
+        self.protocol.client_address = server_address
 
         next_seq_number = 0
         with open(file_dst, 'w', encoding='latin-1') as f:

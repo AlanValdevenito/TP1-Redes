@@ -6,8 +6,6 @@ from server import *
 
 IP = "127.0.0.1"
 PORT = 12000
-MAX_LENGTH = 64
-
 
 def main():
     server = Server(IP, PORT)

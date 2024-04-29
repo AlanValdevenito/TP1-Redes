@@ -9,9 +9,15 @@ class UploadHandler:
         self.client_address = client_address
         self.ended = False
         self.thread = Thread(target = self.handle_upload)
+        # self.protocol = GBN(self.client_address[0], 0, client_address)
+        self.protocol = StopAndWaitProtocol(self.client_address[0], 0, client_address)
+        self.protocol.listen()
 
     def start(self):
         self.thread.start()
+
+    def get_port(self):
+        return self.protocol.get_port()
 
     def handle_upload(self):
         """
@@ -22,22 +28,13 @@ class UploadHandler:
 
         Se encarga de recibir los paquetes del archivo y reconstruirlo.
         """
-        # self.protocol = StopAndWaitProtocol("127.0.0.1", 0)
-        self.protocol = GBN(self.client_address[0], 0)
-        self.protocol.listen()
-    
-        port = self.protocol.get_port() 
-        port_msg = Message(MessageType.PORT, 0, str(port))
-        self.protocol.send_data(port_msg, self.client_address) # Le mando mi puerto al cliente
-
-        next_seq_number = 0
-
+        instruction, _ = self.protocol.recv_data() # Recibo la instruccion
         filename_msg, _ = self.protocol.recv_data() # Recibo el nombre del archivo
 
         if filename_msg.message_type == MessageType.FILE_NAME:
             filename = filename_msg.data
 
-        # UnboundLocalError: local variable 'filename' referenced before assignment
+        next_seq_number = 0
         with open(filename, 'w', encoding='latin-1') as f: # Creo el archivo y recibo la data
             while True:
                 try:
@@ -47,16 +44,16 @@ class UploadHandler:
                         print("llega el END, break")
                         break
 
-                    # if msg.sequence_number != next_seq_number or msg.message_type != MessageType.DATA:
-                    #     continue
+                    if msg.sequence_number != next_seq_number or msg.message_type != MessageType.DATA:
+                        continue
 
                     f.write(msg.data)
                     next_seq_number += 1
 
                 except TimeoutError:
-                    self.protocol.socket.settimeout(10)
+                    self.protocol.socket.settimeout(3)
                     continue
         
-        print("Upload handler termino")
+        print("Upload handler termino\n")
         self.protocol.close()
         self.ended = True

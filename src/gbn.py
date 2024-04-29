@@ -7,7 +7,7 @@ WINDOW_SIZE = 3
 MAX_LENGTH = 64
 
 class GBN:
-    def __init__(self, ip, port):
+    def __init__(self, ip, port, client_address):
         self.base = 0
         self.signumsec = 0
         self.n = WINDOW_SIZE
@@ -17,53 +17,53 @@ class GBN:
         self.address = (ip,port)
         self.timeout = timeout
         self.socket.settimeout(0.0001)
-
+        self.allows_duplicates = False
         self.messages = {}
+
+        self.client_address = client_address
         
     def listen(self):
         self.socket.bind(self.address)
         print(f"Socket bindeado en {self.address}\n")
+
+    def allow_duplicates(self):
+        self.allows_duplicates = True
 
     def get_port(self):
         return self.socket.getsockname()[1]
 
     def recv_data(self):
         self.socket.setblocking(True)
-        encoded_msg, address = self.socket.recvfrom(MAX_LENGTH*2)
+        encoded_msg, _ = self.socket.recvfrom(MAX_LENGTH*2)
         decoded_msg = Message.decode(encoded_msg)
-        print(colored(f"Receiving {decoded_msg}\nfrom {address}\n", "green"))
+        print(colored(f"Receiving {decoded_msg}\nfrom {self.client_address}\n", "green"))
 
-        if (decoded_msg.message_type == MessageType.ACK): # or (decoded_msg.message_type == MessageType.END): \
-            #or (decoded_msg.message_type == MessageType.INSTRUCTION) \
-            #or (decoded_msg.message_type == MessageType.FILE_NAME):
-            return decoded_msg, address
-        
         if (decoded_msg.message_type == MessageType.END):
-            self.send_ack(decoded_msg.sequence_number, address)
-            return decoded_msg, address
+            self.send_ack(decoded_msg.sequence_number, self.client_address)
+            return decoded_msg, self.client_address
 
         if decoded_msg.message_type == MessageType.ACK:
             if decoded_msg.sequence_number < self.base:
-                return decoded_msg, address
+                return decoded_msg, self.client_address
             print(f"Llega un ACK con numero de secuencia {decoded_msg.sequence_number}. Aumentamos la base.\n")
             self.base = decoded_msg.sequence_number + 1
 
         if decoded_msg.sequence_number == self.highest_inorder_seqnum:  # Si el numero de secuencia recibido sigue el orden, manda ese ACK acumulativo.
             self.highest_inorder_seqnum += 1
-            self.send_ack(decoded_msg.sequence_number, address)
-            return decoded_msg, address
+            self.send_ack(decoded_msg.sequence_number, self.client_address)
+            return decoded_msg, self.client_address
         
         # Si el packet esta fuera de orden, reenviamos el ACK del mayor numero de secuencia en orden registrado anteriormente. Descartar paquete?
         # Me quedo esperando hasta que llegue el paquete ordenado
         while decoded_msg.sequence_number != self.highest_inorder_seqnum:
-            self.send_ack(self.highest_inorder_seqnum, address)
-            encoded_msg, address = self.socket.recvfrom(MAX_LENGTH*2)
+            self.send_ack(self.highest_inorder_seqnum, self.client_address)
+            encoded_msg, self.client_address = self.socket.recvfrom(MAX_LENGTH*2)
             decoded_msg = Message.decode(encoded_msg)
         
-        self.send_ack(decoded_msg.sequence_number, address)
-        return decoded_msg, address
-        #self.send_ack(self.highest_inorder_seqnum, address)
-        #return '', address
+        self.send_ack(decoded_msg.sequence_number, self.client_address)
+        return decoded_msg, self.client_address
+        #self.send_ack(self.highest_inorder_seqnum, self.client_address)
+        #return '', self.client_address
 
     def send_ack(self, seq_number, address):
         """
@@ -86,9 +86,9 @@ class GBN:
             self.socket.sendto(encoded_msg, address)
             self.messages[self.signumsec] = encoded_msg
             self.signumsec += 1
-            self.socket.setblocking(True)
+            self.socket.setblocking(False)
             # comenzar timer para el paquete actual.
-            # self.recv_ack(self.base) # Esto no deberia hacerse aca, deberia hacerse en el recv?
+            self.recv_ack(self.base) # Esto no deberia hacerse aca, deberia hacerse en el recv?
 
         else:
             print(colored("Se intento enviar un mensaje pero la ventana esta llena", "red"))
@@ -105,10 +105,13 @@ class GBN:
             encoded_msg, _ = self.socket.recvfrom(MAX_LENGTH * 2)
             msg = Message.decode(encoded_msg)
 
+            print(f"Llega un ACK con numero de secuencia {msg.sequence_number}.\n")
+
             if msg.sequence_number < seq_number:
+                print(f"No aumentamos la base.\n")
                 return False
 
-            print(f"Llega un ACK con numero de secuencia {msg.sequence_number}. Aumentamos la base.\n")
+            print(f"Aumentamos la base.\n")
             self.base = msg.sequence_number + 1
             return True
         except BlockingIOError:
