@@ -1,4 +1,5 @@
 from stopandwait import *
+from gbn import *
 from threading import Thread
 from message import *
 
@@ -8,8 +9,8 @@ class DownloadHandler:
         self.client_address = client_address
         self.thread = Thread(target = self.handle_download)
         self.ended = False
-        # self.protocol = GBN(self.client_address[0], 0, client_address)
-        self.protocol = StopAndWaitProtocol(self.client_address[0], 0, client_address)
+        self.protocol = GBN(self.client_address[0], 0, client_address)
+        # self.protocol = StopAndWaitProtocol(self.client_address[0], 0, client_address)
 
     def start(self):
         self.thread.start()
@@ -29,9 +30,7 @@ class DownloadHandler:
         self.protocol.listen()
 
         instruction, _ = self.protocol.recv_data() # Recibo la instruccion
-        print(instruction)
         filename_msg, _ = self.protocol.recv_data() # Recibo el nombre del archivo a descargar
-        print(filename_msg)
 
         if filename_msg.message_type == MessageType.FILE_NAME:   
             filename = filename_msg.data

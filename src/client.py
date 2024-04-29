@@ -5,13 +5,14 @@ from download_handler import *
 from upload_handler import *
 
 UPLOAD = 'upload'
+DOWNLOAD = 'download'
 
 class Client:
     def __init__(self, ip, port):
         self.ip = ip
         self.port = port
-        self.protocol = StopAndWaitProtocol(ip, port, (ip, port))
-        # self.protocol = GBN(ip, port, (ip, port))
+        # self.protocol = StopAndWaitProtocol(ip, port, (ip, port))
+        self.protocol = GBN(ip, port, (ip, port))
 
     def upload(self, file_source, file_name, server_address):
         """
@@ -68,7 +69,7 @@ class Client:
         - server_address: Direccion del servidor. Es una tupla (IP, PORT).
         """
 
-        request = Message(MessageType.INSTRUCTION, 0, "download")
+        request = Message(MessageType.INSTRUCTION, 0, DOWNLOAD)
         self.protocol.send_data(request, server_address) # Mando un request de download al server
 
         filename_msg = Message(MessageType.FILE_NAME, 0, file_name)
@@ -87,7 +88,8 @@ class Client:
 
                     if msg.sequence_number < next_seq_number: # Por si llego un mensaje repetido
                         continue
-
+                    
+                    print(f"Escribiendo [{msg.data}]\n")
                     f.write(msg.data)
                     next_seq_number += 1
 

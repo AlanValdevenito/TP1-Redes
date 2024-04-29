@@ -9,8 +9,8 @@ class UploadHandler:
         self.client_address = client_address
         self.ended = False
         self.thread = Thread(target = self.handle_upload)
-        # self.protocol = GBN(self.client_address[0], 0, client_address)
-        self.protocol = StopAndWaitProtocol(self.client_address[0], 0, client_address)
+        self.protocol = GBN(self.client_address[0], 0, client_address)
+        # self.protocol = StopAndWaitProtocol(self.client_address[0], 0, client_address)
         self.protocol.listen()
 
     def start(self):

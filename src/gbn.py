@@ -3,7 +3,7 @@ from message import Message, MessageType
 from termcolor import colored 
 import random
 
-WINDOW_SIZE = 3
+WINDOW_SIZE = 4
 MAX_LENGTH = 64
 
 class GBN:
@@ -38,11 +38,26 @@ class GBN:
         decoded_msg = Message.decode(encoded_msg)
         print(colored(f"Receiving {decoded_msg}\nfrom {self.client_address}\n", "green"))
 
-        if (decoded_msg.message_type == MessageType.END):
+        if decoded_msg.message_type == MessageType.ACK:
+            if decoded_msg.sequence_number < self.base:
+                return decoded_msg, self.client_address
+            
+            print(f"Llega un ACK con numero de secuencia {decoded_msg.sequence_number}. Aumentamos la base.\n")
+            self.base = decoded_msg.sequence_number + 1
+            return decoded_msg, self.client_address
+        
+        if decoded_msg.sequence_number == self.highest_inorder_seqnum:  # Si el numero de secuencia recibido sigue el orden, manda ese ACK acumulativo.
+            self.highest_inorder_seqnum += 1
+
+        self.send_ack(decoded_msg.sequence_number, self.client_address)
+        return decoded_msg, self.client_address
+
+        """if (decoded_msg.message_type == MessageType.END):
             self.send_ack(decoded_msg.sequence_number, self.client_address)
             return decoded_msg, self.client_address
 
         if decoded_msg.message_type == MessageType.ACK:
+            print("A")
             if decoded_msg.sequence_number < self.base:
                 return decoded_msg, self.client_address
             print(f"Llega un ACK con numero de secuencia {decoded_msg.sequence_number}. Aumentamos la base.\n")
@@ -59,11 +74,11 @@ class GBN:
             self.send_ack(self.highest_inorder_seqnum, self.client_address)
             encoded_msg, self.client_address = self.socket.recvfrom(MAX_LENGTH*2)
             decoded_msg = Message.decode(encoded_msg)
-        
+
         self.send_ack(decoded_msg.sequence_number, self.client_address)
         return decoded_msg, self.client_address
         #self.send_ack(self.highest_inorder_seqnum, self.client_address)
-        #return '', self.client_address
+        #return '', self.client_address"""
 
     def send_ack(self, seq_number, address):
         """
@@ -76,6 +91,7 @@ class GBN:
 
         ack = Message(MessageType.ACK, seq_number, "")
         self.socket.sendto(ack.encode(), address)
+        print(colored(f"Se envia el ACK a {address} con el numero de secuencia {seq_number}\n", "yellow"))
 
     def send_data(self, message, address):
         
@@ -87,14 +103,15 @@ class GBN:
             self.messages[self.signumsec] = encoded_msg
             self.signumsec += 1
             self.socket.setblocking(False)
-            # comenzar timer para el paquete actual.
-            self.recv_ack(self.base) # Esto no deberia hacerse aca, deberia hacerse en el recv?
+            # Comenzar timer para el paquete actual.
 
         else:
-            print(colored("Se intento enviar un mensaje pero la ventana esta llena", "red"))
+            print(colored("Ventana llena", "red"))
+            print(colored(f"Lost {message}\nto {address}\n", "red"))
+            self.socket.setblocking(True)
+            self.recv_ack(self.base)
 
-        """else:
-            self.socket.setblocking(True) # ?
+            """self.socket.setblocking(True)
             while not self.recv_ack(self.base):
                 if timer == 0:
                     for i in range(self.base, self.signumsec):
@@ -105,13 +122,13 @@ class GBN:
             encoded_msg, _ = self.socket.recvfrom(MAX_LENGTH * 2)
             msg = Message.decode(encoded_msg)
 
-            print(f"Llega un ACK con numero de secuencia {msg.sequence_number}.\n")
+            print(colored(f"Llega un ACK con numero de secuencia {msg.sequence_number}.", "yellow"))
 
             if msg.sequence_number < seq_number:
-                print(f"No aumentamos la base.\n")
+                print(colored(f"No aumentamos la base.\n", "yellow"))
                 return False
 
-            print(f"Aumentamos la base.\n")
+            print(colored(f"Aumentamos la base.\n", "yellow"))
             self.base = msg.sequence_number + 1
             return True
         except BlockingIOError:
