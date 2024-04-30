@@ -26,14 +26,15 @@ class Server:
                 print(f"server listening...")
                 msg, address = self.protocol.recv()  # recibo un mensaje
                 self.protocol.socket.settimeout(1)
-                msg.print()
+                # print(msg)
                 
                 # si el mensaje es un request de upload, lanzo un thread para manejar
                 # el upload. El uploadHandler le manda su puerto al cliente para comunicarse
                 if msg.message_type == MessageType.INSTRUCTION and msg.data == "upload":
                     
                     if address in self.port_by_address.keys():
-                        print("address se manda un request por segunda vez")
+                        pass
+                        # print("address se manda un request por segunda vez")
                     # si es la primer conexion de parte del cliente, creo el handler
                     if address not in self.port_by_address.keys():
                         upload_handler = UploadHandler(address, msg.file_name) 
@@ -42,14 +43,15 @@ class Server:
                         self.port_by_address[address] = port
                         self.sessions[-1].start()
                     port_msg = Message(MessageType.PORT, 0, str(self.port_by_address[address]), "")
-                    print("mando port_msg")
+                    # print("mando port_msg")
                     self.protocol.send(port_msg, address)
 
 
                 # si el request es de download, lo mismo pero con downloadHandler
                 elif msg.message_type == MessageType.INSTRUCTION and msg.data == "download":
                     if address in self.port_by_address.keys():
-                        print("address se manda un request por segunda vez!")
+                        pass
+                        # print("address se manda un request por segunda vez!")
                     if address not in self.port_by_address.keys():
                         download_handler = DownloadHandler(address, msg.file_name)
                         self.sessions.append(download_handler)

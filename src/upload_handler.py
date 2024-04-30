@@ -10,8 +10,8 @@ class UploadHandler:
         self.ended = False
         self.thread = Thread(target = self.handle_upload)
         self.filename = filename
-        self.protocol = StopAndWaitProtocol("127.0.0.1", 0)
-        #self.protocol = GBN("127.0.0.1", 0)
+        #self.protocol = StopAndWaitProtocol("127.0.0.1", 0)
+        self.protocol = GBN("127.0.0.1", 0)
         self.protocol.listen()
 
     def start(self):
@@ -41,13 +41,13 @@ class UploadHandler:
             while True:
                 try:
                     msg, address = self.protocol.recv_data()
-                    msg.print()
+                    # print(msg)
                     if msg.message_type == MessageType.END:
                         break
                     if previous_seq_number == msg.sequence_number or msg.message_type != MessageType.DATA:
                         continue
                     data = msg.data
-                    msg.print()
+                    print(msg)
                     print(f"recibo msg: [{msg.data}]")
                     f.write(data)
                     previous_seq_number = msg.sequence_number

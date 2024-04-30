@@ -9,8 +9,8 @@ class DownloadHandler:
         self.thread = Thread(target = self.handle_download)
         self.ended = False
         self.filename = filename
-        self.protocol = StopAndWaitProtocol("127.0.0.1", 0)
-        #self.protocol = GBN("127.0.0.1", 0)
+        # self.protocol = StopAndWaitProtocol("127.0.0.1", 0)
+        self.protocol = GBN("127.0.0.1", 0)
         self.protocol.listen()
 
     def start(self):
@@ -36,14 +36,15 @@ class DownloadHandler:
             sequence_number = 0
             while sent_bytes < total:
                 current_data = data[sent_bytes:sent_bytes + MAX_LENGTH]
-                print(f"mando data: [{current_data}]")
+                # print(f"mando data: [{current_data}]")
                 message = Message(MessageType.DATA, sequence_number, current_data)
                 self.protocol.send_data(message, self.client_address)
                 sequence_number += 1
                 sent_bytes += MAX_LENGTH
-        print("mando END message")
-        end_message = Message(MessageType.END, 0, "")
+                
+        # print("mando END message")
+        end_message = Message(MessageType.END, sequence_number, "")
         self.protocol.send_data(end_message, self.client_address)
-        print("termine de mandar END emssage")
-        print("download handler termino")
+        # print("termine de mandar END emssage")
+        print("Download handler termino")
         self.ended = True
