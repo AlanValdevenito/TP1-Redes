@@ -80,13 +80,16 @@ class Client:
             while True:
                 try:
                     msg, address = self.protocol.recv_data() # recibo data
-                    print(colored(f"Receiving {msg}\nfrom {address}\n", "green"))
 
                     if msg.message_type == MessageType.END:
                         break
-                    if msg.sequence_number == previous_seq_number:
-                        # por si llego un mensaje repetido
+
+                    if msg.sequence_number == previous_seq_number or msg.sequence_number > previous_seq_number + 1:
+                        # Mensaje repetido
+                        # Mensaje desordenado
+                        print(f"Descartamos paquete con numero de secuencia {msg.sequence_number}")
                         continue
+                    
                     data = msg.data
                     print(colored(f"Writing data\n", "green"))
                     f.write(data)

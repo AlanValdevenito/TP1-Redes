@@ -67,10 +67,19 @@ class GBN:
             self.base = decoded_msg.sequence_number + 1
             return decoded_msg, address
         
-        # if decoded_msg.sequence_number == self.highest_inorder_seqnum:  # Si el numero de secuencia recibido sigue el orden, manda ese ACK acumulativo.
-        #    self.highest_inorder_seqnum += 1
+        # Si el numero de secuencia recibido no sigue el orden, descartamos el paquete y reenviamos el ultimo ACK recibido
 
-        self.send_ack(decoded_msg.sequence_number, address)
+        # Llega el pkt0 -> sequence_number = 0, highest_inorder_seqnum = 0 -> 1
+        # Llega el pkt1 -> sequence_number = 1, highest_inorder_seqnum = 1 -> 2
+        # Se pierde el pkt2 -> manda ACK = 2 - 1 = 1
+        # Llega el pkt3 -> sequence_number = 3, highest_inorder_seqnum = 2
+        if decoded_msg.sequence_number != self.highest_inorder_seqnum:
+            print(f"No se sigue el orden, descartamos el paquete y reenviamos el ACK con numero de secuencia {self.highest_inorder_seqnum}")
+            self.send_ack(self.highest_inorder_seqnum, address)
+            return decoded_msg, address # Se descarta el paquete en client.py
+
+        self.highest_inorder_seqnum += 1
+        self.send_ack(self.highest_inorder_seqnum, address)
         return decoded_msg, address
         
         """if (decoded_msg.message_type == MessageType.END):
@@ -112,7 +121,7 @@ class GBN:
 
         ack = Message(MessageType.ACK, seq_number, "")
         self.socket.sendto(ack.encode(), address)
-        print(colored(f"Se envia el ACK a {address} con el numero de secuencia {seq_number}\n", "yellow"))
+        print(colored(f"Se envia el ACK a {address} con el numero de secuencia {seq_number} (proximo paquete esperado)\n", "yellow"))
         
         """rdm = random.randint(0, 9)
         if rdm < 5:
@@ -128,15 +137,13 @@ class GBN:
         
         #try:
         if self.signumsec <= self.base + self.n - 1:
-            print(colored(f"Sending {message}\nto {address}\n", "green"))            
-            self.socket.sendto(encoded_msg, address)
 
-            """rdm = random.randint(0, 9)
+            rdm = random.randint(0, 9)
             if rdm < 5:
                 print(colored(f"Sending {message}\nto {address}\n", "green"))            
                 self.socket.sendto(encoded_msg, address)
             else:
-                print(colored(f"Lost {message}\nto {address}\n", "red"))"""
+                print(colored(f"Lost {message}\nto {address}\n", "red"))
             
             self.messages[self.signumsec] = encoded_msg
             self.signumsec += 1
@@ -149,11 +156,15 @@ class GBN:
             print(colored(f"Lost {message}\nto {address}\n", "red"))
             # self.socket.settimeout(0.1)
             self.socket.setblocking(True)
-            if self.recv_ack(self.base):
+            if self.recv_ack(self.base + 1):
                 print(colored(f"Sending {message}\nto {address}\n", "green"))
                 self.socket.sendto(encoded_msg, address)
                 self.messages[self.signumsec] = encoded_msg
                 self.signumsec += 1
+            else:
+                print("Reenviamos paquetes")
+                for i in range(self.base, self.signumsec):
+                    self.socket.sendto(self.messages[i], address)
 
                 #"""self.socket.setblocking(True)
                 
@@ -181,14 +192,14 @@ class GBN:
             encoded_msg, _ = self.socket.recvfrom(MAX_LENGTH * 2)
             msg = Message.decode(encoded_msg)
 
-            print(colored(f"Llega un ACK con numero de secuencia {msg.sequence_number}.", "yellow"))
+            print(colored(f"Llega un ACK con numero de secuencia {msg.sequence_number} (proximo paquete esperado).", "yellow"))
 
             if msg.sequence_number < seq_number:
                 print(colored(f"No aumentamos la base.\n", "yellow"))
                 return False
 
             print(colored(f"Aumentamos la base.\n", "yellow"))
-            self.base = msg.sequence_number + 1
+            self.base = msg.sequence_number
             # self.lastackreceived = time.time()
             return True
         
