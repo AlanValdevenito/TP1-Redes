@@ -9,11 +9,11 @@ class MessageType(Enum):
     END = 6   # para avisar que termine de mandar el archivo
 
 class Message:
-    def __init__(self, message_type, sequence_number, data):
+    def __init__(self, message_type, sequence_number, data, file_name = ""):
         self.message_type = message_type
         self.sequence_number = sequence_number
         self.data = data
-        self.file_name = "-"
+        self.file_name = file_name
 
     def print(self):
         
@@ -24,7 +24,7 @@ class Message:
         print("--------------------------\n\n")
         
     def encode(self):
-        file_name_bytes = self.file_name.encode().ljust(10, b'\0') if self.file_name else b'\0' * 10
+        file_name_bytes = self.file_name.encode().ljust(20, b'\0') if self.file_name else b'\0' * 20
         data_bytes = self.data.encode()
         bytes_arr = self.message_type.value.to_bytes(1, byteorder='big') + \
                     self.sequence_number.to_bytes(4, byteorder='big') + \
@@ -38,7 +38,7 @@ class Message:
     def decode(cls, bytes_arr):
         message_type = MessageType(int.from_bytes(bytes_arr[0:1], byteorder='big'))
         sequence_number = int.from_bytes(bytes_arr[1:5], byteorder='big')
-        file_name = bytes_arr[5:15].decode().rstrip('\0')
-        data_length = int.from_bytes(bytes_arr[15:19], byteorder='big')
-        data = bytes_arr[19:19 + data_length].decode()
-        return Message(message_type, sequence_number, data)
+        file_name = bytes_arr[5:25].decode().rstrip('\0')
+        data_length = int.from_bytes(bytes_arr[25:29], byteorder='big')
+        data = bytes_arr[29:29 + data_length].decode()
+        return Message(message_type, sequence_number, data, file_name)

@@ -32,9 +32,9 @@ def main():
     server_address = (IP, SERVER_PORT)
 
     if args.command == UPLOAD:
-        client.upload(args.name, server_address)
+        client.upload(args.src, args.name, server_address)
 
     if args.command == DOWNLOAD:
-        client.download(args.name, server_address)
+        client.download(args.dst, args.name, server_address)
     
 main()

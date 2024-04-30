@@ -20,12 +20,29 @@ class StopAndWaitProtocol:
         print(f"socket bindeado en {(self.ip, self.port)}")
 
     def get_port(self):
+        print(f"protocol.get_port() -> {self.socket.getsockname()[1]}")
         return self.socket.getsockname()[1]
     
+    def recv(self):
+        encoded_msg, address = self.socket.recvfrom(MAX_LENGTH * 2)
+        msg = Message.decode(encoded_msg)
+        #print(f"recvt msg.data = {msg.data}")
+        #msg.print()
+        return msg, address
+
+    def send(self, request, address):
+        #print(f"send: request.data = {request.data}")
+        rdm = random.randint(0, 9)
+        if rdm < 8:
+            self.socket.sendto(request.encode(), address)
+        else:
+            print(colored("se perdio un send", "red"))
+
+
     # Recibe un Message y un address
     # manda el message de forma reliable
     def send_data(self, message, address):
-        print(f"sending data to address = {address}")
+        # print(f"sending data to address = {address}")
         encoded_msg = message.encode()
         msg_acked = False
         count = 0
@@ -34,7 +51,7 @@ class StopAndWaitProtocol:
                 if count >= 10:
                     break
                 rdm = random.randint(0, 9)
-                if rdm < 8:
+                if rdm < 5:
                     self.socket.sendto(encoded_msg, address)
                 else:
                     # puede darse el caso de que el que esta mandando el archivo
