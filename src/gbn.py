@@ -4,57 +4,42 @@ from termcolor import colored
 import random
 import time
 
-
 WINDOW_SIZE = 10
 MAX_LENGTH = 64
 
 class GBN:
     def __init__(self, ip, port):
-        self.base = 0
-        self.signumsec = 0
-        self.n = WINDOW_SIZE
-        self.highest_inorder_seqnum = 0
         self.socket = socket(AF_INET, SOCK_DGRAM)
         self.ip = ip
         self.port = port
-        #self.address = (ip,port)
-        self.timeout = timeout
+
+        self.n = WINDOW_SIZE
+        self.base = 0
+        self.signumsec = 0
+        self.highest_inorder_seqnum = 0
+
         self.socket.settimeout(0.0001)
-        self.allows_duplicates = False
         self.messages = {}
         self.lastackreceived = time.time()
 
-        #self.client_address = client_address
-
     def recv(self):
         encoded_msg, address = self.socket.recvfrom(MAX_LENGTH * 2)
-        msg = Message.decode(encoded_msg)
-        #print(f"recvt msg.data = {msg.data}")
-        #msg.print()
-        return msg, address
+        decoded_msg = Message.decode(encoded_msg)
+        print(colored(f"Receiving {decoded_msg}\nfrom {address}\n", "green"))
+        return decoded_msg, address
 
     def send(self, request, address):
-        #print(f"send: request.data = {request.data}")
-        rdm = random.randint(0, 9)
-        #if rdm < 8:
         self.socket.sendto(request.encode(), address)
-        #else:
-        #    print(colored(f"Lost {request}\nto {address}\n", "red"))
-
+        print(colored(f"Sending {request}\nto {address}\n", "green"))  
 
     def listen(self):
         self.socket.bind((self.ip, self.port))
-        print(f"Socket bindeado en {(self.ip, self.port)}\n")
-
-    def allow_duplicates(self):
-        self.allows_duplicates = True
+        print(f"Socket bindeado en {self.socket.getsockname()}\n")
 
     def get_port(self):
         return self.socket.getsockname()[1]
 
     def recv_data(self):
-        #self.socket.setblocking(True)
-
         encoded_msg, address = self.socket.recvfrom(MAX_LENGTH*2)
         decoded_msg = Message.decode(encoded_msg)
         print(colored(f"Receiving {decoded_msg}\nfrom {address}\n", "green"))
@@ -150,14 +135,15 @@ class GBN:
             
             self.messages[self.signumsec] = encoded_msg
             self.signumsec += 1
-            # Comenzar timer para el paquete actual.
+
+            # Intentamos recibir un ACK que nos permita avanzar la ventana
             self.socket.setblocking(False)
-            self.recv_ack(self.base + 1) # deberia ser base + 1?
+            self.recv_ack(self.base + 1)
 
         else:
             print(colored("Ventana llena", "red"))
             print(colored(f"Lost {message}\nto {address}\n", "red"))
-            # self.socket.settimeout(0.1)
+
             self.socket.setblocking(True)
             if self.recv_ack(self.base + 1):
                 print(colored(f"Sending {message}\nto {address}\n", "green"))
@@ -193,9 +179,8 @@ class GBN:
                             
         # except TimeoutError:
         #    print("Timeout")
-        print(f"Tiempo actual: {time.time()}")
-        print(f"Tiempo desde el ultimo ACK recibido: {self.lastackreceived}")
-        print(f"Diferencia: {time.time()-self.lastackreceived}")
+
+        print(f"Timeout: {time.time()} - {self.lastackreceived} = {time.time()-self.lastackreceived}")
         if(time.time()-self.lastackreceived > 0.0001):
             print(f"Timeout: Reenviando a partir del paquete con numero de secuencia {self.base}")
             for i in range(self.base, self.signumsec):

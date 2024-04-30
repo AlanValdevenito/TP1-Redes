@@ -1,15 +1,11 @@
-from protocol import StopAndWaitProtocol
+from stop_and_wait import StopAndWaitProtocol
 from message import *
 from client import Client
 import argparse
 
-
 IP = "127.0.0.1"
 PORT = 8000
 SERVER_PORT = 12000
-MAX_LENGTH = 64
-
-
 
 UPLOAD = 'upload'
 DOWNLOAD = 'download'
