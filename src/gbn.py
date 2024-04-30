@@ -5,7 +5,7 @@ import random
 import time
 
 
-WINDOW_SIZE = 3
+WINDOW_SIZE = 10
 MAX_LENGTH = 64
 
 class GBN:
@@ -14,7 +14,6 @@ class GBN:
         self.signumsec = 0
         self.n = WINDOW_SIZE
         self.highest_inorder_seqnum = 0
-        self.lastackreceived = 0
         self.socket = socket(AF_INET, SOCK_DGRAM)
         self.ip = ip
         self.port = port
@@ -23,6 +22,7 @@ class GBN:
         self.socket.settimeout(0.0001)
         self.allows_duplicates = False
         self.messages = {}
+        self.lastackreceived = time.time()
 
         #self.client_address = client_address
 
@@ -65,6 +65,10 @@ class GBN:
             
             print(f"Llega un ACK con numero de secuencia {decoded_msg.sequence_number}. Aumentamos la base.\n")
             self.base = decoded_msg.sequence_number + 1
+            #if self.base == self.signumsec:
+                # detener timer
+            #else:
+                # resetear timer
             return decoded_msg, address
         
         # Si el numero de secuencia recibido no sigue el orden, descartamos el paquete y reenviamos el ultimo ACK recibido
@@ -131,7 +135,6 @@ class GBN:
             print(colored("Se perdio un ACK", "red"))"""
 
     def send_data(self, message, address):
-        #self.lastackreceived = time.time()
         print(f"n: {self.n}, base: {self.base}, signumsec: {self.signumsec}\n")
         encoded_msg = message.encode()
         
@@ -149,7 +152,7 @@ class GBN:
             self.signumsec += 1
             # Comenzar timer para el paquete actual.
             self.socket.setblocking(False)
-            self.recv_ack(self.base)
+            self.recv_ack(self.base + 1) # deberia ser base + 1?
 
         else:
             print(colored("Ventana llena", "red"))
@@ -162,9 +165,17 @@ class GBN:
                 self.messages[self.signumsec] = encoded_msg
                 self.signumsec += 1
             else:
+
                 print("Reenviamos paquetes")
                 for i in range(self.base, self.signumsec):
+                    print(colored(f"Sending {Message.decode(self.messages[i])}\nto {address}\n", "green"))
                     self.socket.sendto(self.messages[i], address)
+
+                if self.recv_ack(self.base + 1):
+                    print(colored(f"Sending {message}\nto {address}\n", "green"))
+                    self.socket.sendto(encoded_msg, address)
+                    self.messages[self.signumsec] = encoded_msg
+                    self.signumsec += 1
 
                 #"""self.socket.setblocking(True)
                 
@@ -173,19 +184,23 @@ class GBN:
                 #        for i in range(self.base, self.signumsec):
                 #            self.socket.sendto(self.messages[i], self.address)"""
 
-            #if message.message_type == MessageType.END:
-            #    print("Llega END, mandamos todos")
-            #    while self.signumsec != self.base:
-            #        self.recv_ack(self.base)
-            #         if(time.time()-self.lastackreceived > 0.01):
-            #            for i in range(self.base, self.signumsec):
-            #                    self.socket.sendto(self.messages[i], self.address)
+        # if message.message_type == MessageType.END:
+        #     print("Llega END, mandamos todos")
+        #     while self.signumsec != self.base:
+        #         self.recv_ack(self.base)
+        #         for i in range(self.base, self.signumsec):
+        #             self.socket.sendto(self.messages[i], address)
                             
         # except TimeoutError:
         #    print("Timeout")
-        #    if(time.time()-self.lastackreceived > 0.01):
-        #        for i in range(self.base, self.signumsec):
-        #                    self.socket.sendto(self.messages[i], address)
+        print(f"Tiempo actual: {time.time()}")
+        print(f"Tiempo desde el ultimo ACK recibido: {self.lastackreceived}")
+        print(f"Diferencia: {time.time()-self.lastackreceived}")
+        if(time.time()-self.lastackreceived > 0.0001):
+            print(f"Timeout: Reenviando a partir del paquete con numero de secuencia {self.base}")
+            for i in range(self.base, self.signumsec):
+                print(colored(f"Sending {Message.decode(self.messages[i])}\nto {address}\n", "green"))
+                self.socket.sendto(self.messages[i], address)
 
     def recv_ack(self, seq_number):
         try:   
@@ -200,7 +215,7 @@ class GBN:
 
             print(colored(f"Aumentamos la base.\n", "yellow"))
             self.base = msg.sequence_number
-            # self.lastackreceived = time.time()
+            self.lastackreceived = time.time()
             return True
         
         except BlockingIOError:

@@ -81,7 +81,7 @@ class Client:
                 try:
                     msg, address = self.protocol.recv_data() # recibo data
 
-                    if msg.message_type == MessageType.END:
+                    if msg.message_type == MessageType.END and msg.sequence_number == previous_seq_number + 1:
                         break
 
                     if msg.sequence_number == previous_seq_number or msg.sequence_number > previous_seq_number + 1:
