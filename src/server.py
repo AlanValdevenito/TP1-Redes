@@ -3,6 +3,9 @@ from message import *
 from download_handler import *
 from upload_handler import *
 
+UPLOAD = 'upload'
+DOWNLOAD = 'download'
+
 class Server:
     def __init__(self, ip, port):
         self.ip = ip
@@ -38,7 +41,7 @@ class Server:
                 
                 # Si el mensaje es un request de upload, lanzo un thread para manejar
                 # el upload. El uploadHandler le manda su puerto al cliente para comunicarse
-                if msg.message_type == MessageType.INSTRUCTION and msg.data == "upload":
+                if msg.message_type == MessageType.INSTRUCTION and msg.data == UPLOAD:
                     
                     # Si es la primer conexion de parte del cliente, creo el handler
                     if address not in self.port_by_address.keys():
@@ -52,7 +55,7 @@ class Server:
                     self.protocol.send(port_msg, address)
 
                 # Si el request es de download, lo mismo pero con downloadHandler
-                elif msg.message_type == MessageType.INSTRUCTION and msg.data == "download":
+                elif msg.message_type == MessageType.INSTRUCTION and msg.data == DOWNLOAD:
 
                     if address not in self.port_by_address.keys():
                         download_handler = DownloadHandler(address, msg.file_name)
@@ -60,10 +63,6 @@ class Server:
                         port = download_handler.get_port()
                         self.port_by_address[address] = port
                         self.sessions[-1].start()
-
-                    #port_msg = Message(MessageType.PORT, 0, str(self.port_by_address[address]), "")
-                    #print("mando port_msg")
-                    #self.protocol.send(port_msg, address)
                 
                 for session in self.sessions: # Join a las sesiones que terminaron
                     if session.ended:

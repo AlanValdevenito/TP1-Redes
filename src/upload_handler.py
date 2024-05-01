@@ -13,8 +13,8 @@ class UploadHandler:
         self.thread = Thread(target = self.handle_upload)
         self.ended = False
         
-        self.protocol = StopAndWaitProtocol("127.0.0.1", RANDOM_PORT)
-        #self.protocol = GBN("127.0.0.1", RANDOM_PORT)
+        # self.protocol = StopAndWaitProtocol("127.0.0.1", RANDOM_PORT)
+        self.protocol = GBN("127.0.0.1", RANDOM_PORT)
         self.protocol.listen()
 
     def start(self):
@@ -39,16 +39,21 @@ class UploadHandler:
                 try:
                     msg, address = self.protocol.recv_data()
 
-                    if msg.message_type == MessageType.END:
+                    # Si llega un mensaje de tipo END y tiene el numero de secuencia esperado (esta en orden)...
+                    if msg.message_type == MessageType.END and msg.sequence_number == previous_seq_number + 1:
                         break
 
-                    if previous_seq_number == msg.sequence_number or msg.message_type != MessageType.DATA:
+                    # Si el mensaje tiene el numero de secuencia esperado (esta en orden)...
+                    if msg.sequence_number == previous_seq_number + 1:
+                        f.write(msg.data)
+                        print(colored(f"Writing data\n", "green"))
+
+                        previous_seq_number = msg.sequence_number
+
+                    # Si el mensaje esta repetido o desordenado...
+                    else:
+                        print(f"Descartamos paquete con numero de secuencia {msg.sequence_number}\n")
                         continue
-
-                    f.write(msg.data)
-                    print(colored(f"Writing data\n", "green"))
-
-                    previous_seq_number = msg.sequence_number
 
                 except TimeoutError:
                     self.protocol.socket.settimeout(10)

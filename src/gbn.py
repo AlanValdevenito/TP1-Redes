@@ -14,9 +14,9 @@ class GBN:
         self.port = port
 
         self.n = WINDOW_SIZE
-        self.base = 0
-        self.signumsec = 0
-        self.highest_inorder_seqnum = 0
+        self.base = 0 # Numero de secuencia del paquete no reconocido mas antiguo.
+        self.signumsec = 0 # Numero de secuencia del siguiente paquete que se va a enviar.
+        self.highest_inorder_seqnum = 0 # Numero de secuencia en orden y ya reconocido mas alto.
 
         self.socket.settimeout(0.0001)
         self.messages = {}
@@ -25,12 +25,12 @@ class GBN:
     def recv(self):
         encoded_msg, address = self.socket.recvfrom(MAX_LENGTH * 2)
         decoded_msg = Message.decode(encoded_msg)
-        print(colored(f"Receiving {decoded_msg}\nfrom {address}\n", "green"))
+        # print(colored(f"Receiving {decoded_msg}\nfrom {address}\n", "green"))
         return decoded_msg, address
 
     def send(self, request, address):
         self.socket.sendto(request.encode(), address)
-        print(colored(f"Sending {request}\nto {address}\n", "green"))  
+        # print(colored(f"Sending {request}\nto {address}\n", "green"))  
 
     def listen(self):
         self.socket.bind((self.ip, self.port))
@@ -56,14 +56,14 @@ class GBN:
                 # resetear timer
             return decoded_msg, address
         
-        # Si el numero de secuencia recibido no sigue el orden, descartamos el paquete y reenviamos el ultimo ACK recibido
-
-        # Llega el pkt0 -> sequence_number = 0, highest_inorder_seqnum = 0 -> 1
-        # Llega el pkt1 -> sequence_number = 1, highest_inorder_seqnum = 1 -> 2
-        # Se pierde el pkt2 -> manda ACK = 2 - 1 = 1
-        # Llega el pkt3 -> sequence_number = 3, highest_inorder_seqnum = 2
+        # Si el numero de secuencia recibido no sigue el orden, descartamos el paquete y reenviamos el ultimo ACK recibido. Por ejemplo:
+        # 1) Recibimos el pkt0: sequence_number = 0, highest_inorder_seqnum = 0 -> 1.
+        # 2) Recibimos el pkt1: sequence_number = 1, highest_inorder_seqnum = 1 -> 2.
+        # 3) Se pierde el pkt2.
+        # 4) Recibimos el pkt3: sequence_number = 3, highest_inorder_seqnum = 2. Se descarta el pkt3 y enviamos ACK con numero 
+        # de secuencia 2 (proximo paquete esperado).
         if decoded_msg.sequence_number != self.highest_inorder_seqnum:
-            print(f"No se sigue el orden, descartamos el paquete y reenviamos el ACK con numero de secuencia {self.highest_inorder_seqnum}")
+            print(f"No se sigue el orden, descartamos el paquete y reenviamos el ACK con numero de secuencia {self.highest_inorder_seqnum}\n")
             self.send_ack(self.highest_inorder_seqnum, address)
             return decoded_msg, address # Se descarta el paquete en client.py
 
@@ -71,34 +71,6 @@ class GBN:
         self.send_ack(self.highest_inorder_seqnum, address)
         return decoded_msg, address
         
-        """if (decoded_msg.message_type == MessageType.END):
-            self.send_ack(decoded_msg.sequence_number, self.client_address)
-            return decoded_msg, self.client_address
-
-        if decoded_msg.message_type == MessageType.ACK:
-            print("A")
-            if decoded_msg.sequence_number < self.base:
-                return decoded_msg, self.client_address
-            print(f"Llega un ACK con numero de secuencia {decoded_msg.sequence_number}. Aumentamos la base.\n")
-            self.base = decoded_msg.sequence_number + 1
-
-        if decoded_msg.sequence_number == self.highest_inorder_seqnum:  # Si el numero de secuencia recibido sigue el orden, manda ese ACK acumulativo.
-            self.highest_inorder_seqnum += 1
-            self.send_ack(decoded_msg.sequence_number, self.client_address)
-            return decoded_msg, self.client_address
-        
-        # Si el packet esta fuera de orden, reenviamos el ACK del mayor numero de secuencia en orden registrado anteriormente. Descartar paquete?
-        # Me quedo esperando hasta que llegue el paquete ordenado
-        while decoded_msg.sequence_number != self.highest_inorder_seqnum:
-            self.send_ack(self.highest_inorder_seqnum, self.client_address)
-            encoded_msg, self.client_address = self.socket.recvfrom(MAX_LENGTH*2)
-            decoded_msg = Message.decode(encoded_msg)
-
-        self.send_ack(decoded_msg.sequence_number, self.client_address)
-        return decoded_msg, self.client_address
-        #self.send_ack(self.highest_inorder_seqnum, self.client_address)
-        #return '', self.client_address"""
-
     def send_ack(self, seq_number, address):
         """
         Envia un ACK.
@@ -109,25 +81,26 @@ class GBN:
         """
 
         ack = Message(MessageType.ACK, seq_number, "")
-        self.socket.sendto(ack.encode(), address)
-        print(colored(f"Se envia el ACK a {address} con el numero de secuencia {seq_number} (proximo paquete esperado)\n", "yellow"))
+        # self.socket.sendto(ack.encode(), address)
+        # print(colored(f"Se envia el ACK a {address} con el numero de secuencia {seq_number} (proximo paquete esperado)\n", "yellow"))
         
-        """rdm = random.randint(0, 9)
-        if rdm < 5:
+        rdm = random.randint(0, 9)
+        if rdm < 2:
             self.socket.sendto(ack.encode(), address)
             print(colored(f"Se envia el ACK a {address} con el numero de secuencia {seq_number}\n", "yellow"))
         else:
-            print(colored("Se perdio un ACK", "red"))"""
+            print(colored(f"Se perdio el ACK con el numero de secuencia {seq_number}\n", "red"))
 
     def send_data(self, message, address):
         print(f"n: {self.n}, base: {self.base}, signumsec: {self.signumsec}\n")
         encoded_msg = message.encode()
         
-        #try:
         if self.signumsec <= self.base + self.n - 1:
+            # print(colored(f"Sending {message}\nto {address}\n", "green"))            
+            # self.socket.sendto(encoded_msg, address)
 
             rdm = random.randint(0, 9)
-            if rdm < 5:
+            if rdm < 2:
                 print(colored(f"Sending {message}\nto {address}\n", "green"))            
                 self.socket.sendto(encoded_msg, address)
             else:
@@ -136,75 +109,89 @@ class GBN:
             self.messages[self.signumsec] = encoded_msg
             self.signumsec += 1
 
-            # Intentamos recibir un ACK que nos permita avanzar la ventana
+            # Intentamos recibir un ACK de forma no bloqueante que nos permita mover la ventana.
             self.socket.setblocking(False)
-            self.recv_ack(self.base + 1)
+            self.recv_ack(self.base)
 
         else:
             print(colored("Ventana llena", "red"))
             print(colored(f"Lost {message}\nto {address}\n", "red"))
-
             self.socket.setblocking(True)
-            if self.recv_ack(self.base + 1):
+
+            # Esperamos por un ACK de forma bloqueante que nos permita mover la ventana.
+            # Cuando llega el ACK reenviamos el paquete que quedo fuera de la ventana.
+            if self.recv_ack(self.base):
                 print(colored(f"Sending {message}\nto {address}\n", "green"))
                 self.socket.sendto(encoded_msg, address)
                 self.messages[self.signumsec] = encoded_msg
                 self.signumsec += 1
             else:
+                # Se recibio un ACK repetido. Por ejemplo: Inicialmente base = 0, signumsec = 1.
+                # 1) Enviamos el pkt0.
+                # 2) Enviamos el pkt1.
+                # 3) Recbimos ack0 con numero de secuencia 1 (proximo pkt esperado). Actualizamos base = 1.
+                # 4) Ocurre un timeout prematuro debito al pkt 1. Reenviamos el pkt 1.
+                # 5) Recibimos ack0 con numero de secuencia 1 (proximo pkt esperado). 
+                
+                # Luego, no actualizamos la base ya que es un acknowledge repetido.
+                self.retransmitir_paquetes(address)
 
-                print("Reenviamos paquetes")
-                for i in range(self.base, self.signumsec):
-                    print(colored(f"Sending {Message.decode(self.messages[i])}\nto {address}\n", "green"))
-                    self.socket.sendto(self.messages[i], address)
-
-                if self.recv_ack(self.base + 1):
+                # Esperamos por un ACK de forma bloqueante que nos permita mover la ventana.
+                # Cuando llega el ACK reenviamos el paquete que quedo fuera de la ventana.
+                if self.recv_ack(self.base):
                     print(colored(f"Sending {message}\nto {address}\n", "green"))
                     self.socket.sendto(encoded_msg, address)
                     self.messages[self.signumsec] = encoded_msg
                     self.signumsec += 1
 
-                #"""self.socket.setblocking(True)
-                
-                #while not self.recv_ack(self.base):
-                #    if timer == 0:
-                #        for i in range(self.base, self.signumsec):
-                #            self.socket.sendto(self.messages[i], self.address)"""
+        # Puede pasar que la diferencia no sea mayor a 0.0001 y al final no se envien todos los paquetes, incluyendo el 
+        # de tipo END. Esto como consecuencia deja bloqueado al cliente.
 
-        # if message.message_type == MessageType.END:
-        #     print("Llega END, mandamos todos")
-        #     while self.signumsec != self.base:
-        #         self.recv_ack(self.base)
-        #         for i in range(self.base, self.signumsec):
-        #             self.socket.sendto(self.messages[i], address)
-                            
-        # except TimeoutError:
-        #    print("Timeout")
+        # Si aumentamos 0.0001 a 0.000001 ya no tenemos este problema.
+        print(f"Timeout: {time.time()} - {self.lastackreceived} = {time.time()-self.lastackreceived}\n")
+        if(time.time()-self.lastackreceived > 0.000001):
+            self.retransmitir_paquetes(address)
 
-        print(f"Timeout: {time.time()} - {self.lastackreceived} = {time.time()-self.lastackreceived}")
-        if(time.time()-self.lastackreceived > 0.0001):
-            print(f"Timeout: Reenviando a partir del paquete con numero de secuencia {self.base}")
-            for i in range(self.base, self.signumsec):
-                print(colored(f"Sending {Message.decode(self.messages[i])}\nto {address}\n", "green"))
-                self.socket.sendto(self.messages[i], address)
+    def recv_ack(self, base):
+        """
+        Recibe un ACK.
 
-    def recv_ack(self, seq_number):
+        Parametros:
+        - base: Numero de secuencia del paquete no reconocido mas antiguo.
+
+        Devuelve:
+        - True si el numero de secuencia del ACK recibido coincide con el numero de secuencia base + 1 (proximo paquete esperado).
+        - False en caso contrario.
+        """
         try:   
             encoded_msg, _ = self.socket.recvfrom(MAX_LENGTH * 2)
             msg = Message.decode(encoded_msg)
 
             print(colored(f"Llega un ACK con numero de secuencia {msg.sequence_number} (proximo paquete esperado).", "yellow"))
 
-            if msg.sequence_number < seq_number:
-                print(colored(f"No aumentamos la base.\n", "yellow"))
+            if msg.sequence_number < base + 1:
+                print(colored(f"No actualizamos la base (llego un ACK repetido).\n", "yellow"))
                 return False
 
-            print(colored(f"Aumentamos la base.\n", "yellow"))
+            print(colored(f"Actualizamos la base.\n", "yellow"))
             self.base = msg.sequence_number
-            self.lastackreceived = time.time()
+            self.lastackreceived = time.time() # Reiniciamos el timer cuando llega un ACK
             return True
         
         except BlockingIOError:
             pass
+
+    def retransmitir_paquetes(self, address):
+        """
+        Retransmite los paquetes que ya han sido enviados pero todavia no se han reconocido. Esto es
+        el intervalo [base, signumsec-1].
+        """
+        print(colored("-------------------------------------", "blue"))
+        print(colored(f"Reenviando paquetes con numero de secuencia [{self.base}, {self.signumsec-1}]\n", "blue"))
+        for i in range(self.base, self.signumsec):
+            print(colored(f"Re-sending {Message.decode(self.messages[i])}\nto {address}\n", "blue"))
+            self.socket.sendto(self.messages[i], address)
+        print(colored("-------------------------------------\n", "blue"))
     
     def close(self):
         self.socket.close()

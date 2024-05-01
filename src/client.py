@@ -12,8 +12,8 @@ class Client:
         self.ip = ip
         self.port = port
 
-        self.protocol = StopAndWaitProtocol(ip, port)
-        # self.protocol = GBN(ip, port)
+        # self.protocol = StopAndWaitProtocol(ip, port)
+        self.protocol = GBN(ip, port)
 
     def upload(self, file_src, file_name, server_address):
         """
@@ -49,7 +49,7 @@ class Client:
                 self.protocol.send(request, server_address)
                 continue
 
-        sequence_number += 1
+        sequence_number = 0 # ¿Por que antes estaba inicializado en -1?. Se cambio para que funcione GBN.
         with open(file_src, 'r', encoding='latin-1') as f:
             data = f.read()
             total = len(data)
@@ -94,19 +94,21 @@ class Client:
                 try:
                     msg, address = self.protocol.recv_data()
 
-                    # Si llega un mensaje de tipo END y esta en orden...
+                    # Si llega un mensaje de tipo END y tiene el numero de secuencia esperado (esta en orden)...
                     if msg.message_type == MessageType.END and msg.sequence_number == previous_seq_number + 1:
                         break
 
+                    # Si el mensaje tiene el numero de secuencia esperado (esta en orden)...
+                    if msg.sequence_number == previous_seq_number + 1:
+                        f.write(msg.data)
+                        print(colored(f"Writing data\n", "green"))
+
+                        previous_seq_number = msg.sequence_number
+
                     # Si el mensaje esta repetido o desordenado...
-                    if msg.sequence_number == previous_seq_number or msg.sequence_number > previous_seq_number + 1:
+                    else:
                         print(f"Descartamos paquete con numero de secuencia {msg.sequence_number}\n")
                         continue
-                    
-                    f.write(msg.data)
-                    print(colored(f"Writing data\n", "green"))
-                    
-                    previous_seq_number = msg.sequence_number
 
                 except TimeoutError:
                     self.protocol.send(request, server_address)
