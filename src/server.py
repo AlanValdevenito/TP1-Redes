@@ -1,3 +1,4 @@
+import os
 from download_handler import *
 from upload_handler import *
 
@@ -6,7 +7,8 @@ DOWNLOAD = 'download'
 
 
 class Server:
-    def __init__(self, ip, port, number_protocol):
+    def __init__(self, ip, port, number_protocol, storage_dir):
+        self.storage_dir = storage_dir if storage_dir[-1] == '/' else storage_dir + '/'
         self.ip = ip
         self.port = port
 
@@ -15,6 +17,9 @@ class Server:
 
         self.protocol = StopAndWaitProtocol(ip, port)
         self.number_protocol = number_protocol
+
+        if not os.path.exists(self.storage_dir):
+            os.makedirs(self.storage_dir)
 
     def start(self):
         """
@@ -44,7 +49,7 @@ class Server:
 
                     # Si es la primera conexión de parte del cliente, creo el handler
                     if address not in self.port_by_address.keys():
-                        upload_handler = UploadHandler(address, msg.file_name, self.number_protocol)
+                        upload_handler = UploadHandler(address, self.storage_dir + msg.file_name, self.number_protocol)
                         self.sessions.append(upload_handler)
                         port = self.sessions[-1].get_port()
                         self.port_by_address[address] = port
@@ -57,7 +62,8 @@ class Server:
                 elif msg.message_type == MessageType.INSTRUCTION and msg.data == DOWNLOAD:
 
                     if address not in self.port_by_address.keys():
-                        download_handler = DownloadHandler(address, msg.file_name, self.number_protocol)
+                        download_handler = DownloadHandler(address, self.storage_dir + msg.file_name,
+                                                           self.number_protocol)
                         self.sessions.append(download_handler)
                         port = download_handler.get_port()
                         self.port_by_address[address] = port
