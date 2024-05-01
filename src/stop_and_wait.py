@@ -6,6 +6,7 @@ from termcolor import colored
 
 MAX_LENGTH = 64
 
+
 class StopAndWaitProtocol:
     def __init__(self, ip, port):
         self.socket = socket(AF_INET, SOCK_DGRAM)
@@ -18,7 +19,7 @@ class StopAndWaitProtocol:
 
     def get_port(self):
         return self.socket.getsockname()[1]
-    
+
     def recv(self):
         encoded_msg, address = self.socket.recvfrom(MAX_LENGTH * 2)
         msg = Message.decode(encoded_msg)
@@ -26,7 +27,7 @@ class StopAndWaitProtocol:
 
     def send(self, request, address):
         rdm = random.randint(0, 9)
-        if rdm < 3:
+        if rdm < 8:
             # print(colored(f"Sending {request}\nto {address}\n", "green"))
             self.socket.sendto(request.encode(), address)
         else:
@@ -52,7 +53,7 @@ class StopAndWaitProtocol:
                 if count >= 10:
                     break
                 rdm = random.randint(0, 9)
-                if rdm < 3:
+                if rdm < 8:
                     print(colored(f"Sending {message}\nto {address}\n", "green"))
                     self.socket.sendto(encoded_msg, address)
                 else:
@@ -71,7 +72,7 @@ class StopAndWaitProtocol:
 
                 self.socket.settimeout(0.05)
                 msg_acked = self.recv_ack(message.sequence_number)
-                
+
             except TimeoutError:
                 continue
 
@@ -103,7 +104,7 @@ class StopAndWaitProtocol:
         print(colored(f"Expected = {seq_number}", "yellow"))
         print(colored(f"Got = {msg.sequence_number}\n", "yellow"))
         return msg.sequence_number == seq_number
-    
+
     # Private
     def send_ack(self, seq_number, address):
         """
@@ -117,12 +118,12 @@ class StopAndWaitProtocol:
         ack = Message(MessageType.ACK, seq_number, "")
 
         rdm = random.randint(0, 9)
-        if rdm < 3:
+        if rdm < 8:
             print(colored(f"Se envia el ACK a {address} con el numero de secuencia {seq_number}\n", "yellow"))
             self.socket.sendto(ack.encode(), address)
         else:
             print(colored(f"Se perdio el ACK con el numero de secuencia {seq_number}\n", "red"))
-    
+
     def recv_data(self):
         """
         Recibe datos del socket y envia el ACK correspondiente.
@@ -131,12 +132,12 @@ class StopAndWaitProtocol:
         - Una tupla con una instancia de Message con los datos recibidos y la direccion desde donde fue enviado.
         """
 
-        encoded_msg, address = self.socket.recvfrom(MAX_LENGTH*2)
+        encoded_msg, address = self.socket.recvfrom(MAX_LENGTH * 2)
         msg = Message.decode(encoded_msg)
         print(colored(f"Receiving {msg}\nfrom {address}\n", "green"))
 
         self.send_ack(msg.sequence_number, address)
         return msg, address
-    
+
     def close(self):
         self.socket.close()

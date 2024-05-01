@@ -6,15 +6,16 @@ from gbn import *
 RANDOM_PORT = 0
 STOP_AND_WAIT = '1'
 
+
 class DownloadHandler:
     def __init__(self, client_address, filename, protocol):
         self.client_address = client_address
         self.filename = filename
 
-        self.thread = Thread(target = self.handle_download)
+        self.thread = Thread(target=self.handle_download)
         self.ended = False
 
-        if (protocol == STOP_AND_WAIT):
+        if protocol == STOP_AND_WAIT:
             print("DownloadHandler: Se eligio 'Stop and Wait' como protocolo.\n")
             self.protocol = StopAndWaitProtocol("127.0.0.1", RANDOM_PORT)
         else:
@@ -40,7 +41,7 @@ class DownloadHandler:
         """
 
         # Falta comprobar que existe el archivo 'filename'
-        with open(self.filename, 'r', encoding='latin-1') as f:    
+        with open(self.filename, 'rb') as f:
             data = f.read()
             total = len(data)
 
@@ -54,7 +55,7 @@ class DownloadHandler:
 
                 sequence_number += 1
                 sent_bytes += MAX_LENGTH
-                
+
         end_message = Message(MessageType.END, sequence_number, "")
         self.protocol.send_data(end_message, self.client_address)
 

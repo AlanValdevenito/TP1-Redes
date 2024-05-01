@@ -10,6 +10,7 @@ SERVER_PORT = 12000
 UPLOAD = 'upload'
 DOWNLOAD = 'download'
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Command line utility for uploading and downloading files')
     parser.add_argument('command', choices=['upload', 'download'], help='Command to execute')
@@ -23,6 +24,7 @@ def parse_args():
     parser.add_argument('-P', '--protocol', metavar='PROTOCOL', help='protocol number')
     return parser.parse_args()
 
+
 def main():
     args = parse_args()
     client = Client(IP, PORT, args.protocol)
@@ -33,5 +35,6 @@ def main():
 
     if args.command == DOWNLOAD:
         client.download(args.dst, args.name, server_address)
-    
+
+
 main()

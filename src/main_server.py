@@ -8,6 +8,7 @@ import argparse
 IP = "127.0.0.1"
 PORT = 12000
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description='<command description>')
     parser.add_argument('-v', '--verbose', action='store_true', help='increase output verbosity')
@@ -18,10 +19,12 @@ def parse_args():
     parser.add_argument('-P', '--protocol', metavar='PROTOCOL', help='protocol number')
     return parser.parse_args()
 
+
 def main():
     args = parse_args()
 
     server = Server(IP, PORT, args.protocol)
     server.start()
+
 
 main()

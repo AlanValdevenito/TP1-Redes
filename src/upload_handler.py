@@ -6,12 +6,13 @@ from gbn import *
 RANDOM_PORT = 0
 STOP_AND_WAIT = '1'
 
+
 class UploadHandler:
     def __init__(self, client_address, filename, protocol):
         self.client_address = client_address
         self.filename = filename
 
-        self.thread = Thread(target = self.handle_upload)
+        self.thread = Thread(target=self.handle_upload)
         self.ended = False
 
         if (protocol == STOP_AND_WAIT):
@@ -20,7 +21,7 @@ class UploadHandler:
         else:
             print("UploadHandler: Se eligio 'GBN' como protocolo.\n")
             self.protocol = GBN("127.0.0.1", RANDOM_PORT)
-        
+
         self.protocol.listen()
 
     def start(self):
@@ -28,7 +29,7 @@ class UploadHandler:
 
     def get_port(self):
         return self.protocol.get_port()
-    
+
     def handle_upload(self):
         """
         Maneja el request UPLOAD.
@@ -40,7 +41,7 @@ class UploadHandler:
         """
 
         previous_seq_number = -1
-        with open(self.filename, 'w', encoding='latin-1') as f:   
+        with open(self.filename, 'wb') as f:
             while True:
                 try:
                     msg, address = self.protocol.recv_data()
@@ -59,12 +60,11 @@ class UploadHandler:
                     # Si el mensaje esta repetido o desordenado...
                     else:
                         print(f"Descartamos paquete con numero de secuencia {msg.sequence_number}\n")
-                        continue
 
                 except TimeoutError:
                     self.protocol.socket.settimeout(10)
                     continue
-        
+
         self.protocol.close()
         self.ended = True
         print("Upload handler termino")

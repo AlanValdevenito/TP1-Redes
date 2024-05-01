@@ -9,12 +9,13 @@ DOWNLOAD = 'download'
 
 STOP_AND_WAIT = '1'
 
+
 class Client:
     def __init__(self, ip, port, protocol):
         self.ip = ip
         self.port = port
 
-        if (protocol == STOP_AND_WAIT):
+        if protocol == STOP_AND_WAIT:
             print("Client: Se eligio 'Stop and Wait' como protocolo.\n")
             self.protocol = StopAndWaitProtocol(ip, port)
         else:
@@ -38,7 +39,7 @@ class Client:
         sequence_number = 0
         request = Message(MessageType.INSTRUCTION, sequence_number, UPLOAD, file_name)
 
-        self.protocol.send(request, server_address) # Mando un request para hacer upload
+        self.protocol.send(request, server_address)  # Mando un request para hacer upload
         self.protocol.socket.settimeout(1)
 
         received_port = False
@@ -55,8 +56,8 @@ class Client:
                 self.protocol.send(request, server_address)
                 continue
 
-        sequence_number = 0 # ¿Por que antes estaba inicializado en -1?. Se cambio para que funcione GBN.
-        with open(file_src, 'r', encoding='latin-1') as f:
+        sequence_number = 0  # ¿Por que antes estaba inicializado en -1?. Se cambio para que funcione GBN.
+        with open(file_src, 'rb') as f:
             data = f.read()
             total = len(data)
 
@@ -64,7 +65,7 @@ class Client:
             while sent_bytes < total:
                 current_data = data[sent_bytes:sent_bytes + MAX_LENGTH]
                 message = Message(MessageType.DATA, sequence_number, current_data)
-            
+
                 self.protocol.send_data(message, server_address)
 
                 sequence_number += 1
@@ -91,11 +92,11 @@ class Client:
         sequence_number = 0
         request = Message(MessageType.INSTRUCTION, sequence_number, DOWNLOAD, file_name)
 
-        self.protocol.send(request, server_address) # Mando un request de download al server
+        self.protocol.send(request, server_address)  # Mando un request de download al server
         self.protocol.socket.settimeout(1)
 
         previous_seq_number = -1
-        with open(file_dst, 'w', encoding='latin-1') as f:
+        with open(file_dst, 'wb') as f:
             while True:
                 try:
                     msg, address = self.protocol.recv_data()
@@ -119,6 +120,6 @@ class Client:
                 except TimeoutError:
                     self.protocol.send(request, server_address)
                     continue
-        
+
         self.protocol.close()
         print("Cliente termino")
