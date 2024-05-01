@@ -1,5 +1,5 @@
-from socket import *
 from message import *
+from protocol import Protocol
 import random
 
 from termcolor import colored
@@ -7,27 +7,13 @@ from termcolor import colored
 MAX_LENGTH = 64
 
 
-class StopAndWaitProtocol:
+class StopAndWaitProtocol(Protocol):
     def __init__(self, ip, port):
-        self.socket = socket(AF_INET, SOCK_DGRAM)
-        self.ip = ip
-        self.port = port
-
-    def listen(self):
-        self.socket.bind((self.ip, self.port))
-        print(f"Socket bindeado en {self.socket.getsockname()}")
-
-    def get_port(self):
-        return self.socket.getsockname()[1]
-
-    def recv(self):
-        encoded_msg, address = self.socket.recvfrom(MAX_LENGTH * 2)
-        msg = Message.decode(encoded_msg)
-        return msg, address
+        Protocol.__init__(self, ip, port)
 
     def send(self, request, address):
         rdm = random.randint(0, 9)
-        if rdm < 8:
+        if rdm < 3:
             # print(colored(f"Sending {request}\nto {address}\n", "green"))
             self.socket.sendto(request.encode(), address)
         else:
@@ -36,12 +22,12 @@ class StopAndWaitProtocol:
 
     def send_data(self, message, address):
         """
-        Envia un mensaje a la direccion indicada de forma confiable.
-        En caso de no recibir un ACK correcto, volvera a enviar el mensaje.
+        Envia un mensaje a la dirección indicada de forma confiable.
+        En caso de no recibir un ACK correcto, volverá a enviar el mensaje.
         
-        Parametros:
+        Parámetros:
         - message: Mensaje a enviar.
-        - address: Direccion donde se desea enviar el mensaje.
+        - address: Dirección donde se desea enviar el mensaje.
         """
 
         encoded_msg = message.encode()
@@ -53,12 +39,12 @@ class StopAndWaitProtocol:
                 if count >= 10:
                     break
                 rdm = random.randint(0, 9)
-                if rdm < 8:
+                if rdm < 3:
                     print(colored(f"Sending {message}\nto {address}\n", "green"))
                     self.socket.sendto(encoded_msg, address)
                 else:
-                    # puede darse el caso de que el que esta mandando el archivo
-                    # mande un END, el otro conteste con un ACK pero el ACK se pierde
+                    # Puede darse el caso de que el que está mandando el archivo
+                    # mande un END, el otro conteste con un ACK, pero el ACK se pierde
                     # el que mando el ACK se desconecta
                     #
                     # Cuento cuantos END se perdieron. Si llega a 10
@@ -83,12 +69,12 @@ class StopAndWaitProtocol:
         """
         Recibe un ACK.
 
-        Parametros:
-        - seq_number: Numero de secuencia del ultimo mensaje enviado.
+        Parámetros:
+        - seq_number: Número de secuencia del último mensaje enviado.
 
         Devuelve:
-        - True: Si coincide el sequence number del ACK con el numero de secuencia del ultimo mensaje enviado.
-        - False: Si no coincide el sequence number del ACK con el numero de secuencia del ultimo mensaje enviado.
+        - True: Si coincide el sequence number del ACK con el número de secuencia del último mensaje enviado.
+        - False: Si no coincide el sequence number del ACK con el número de secuencia del último mensaje enviado.
         """
 
         encoded_msg, _ = self.socket.recvfrom(MAX_LENGTH)
@@ -110,15 +96,15 @@ class StopAndWaitProtocol:
         """
         Envia un ACK.
 
-        Parametros:
-        - seq_number: Numero de secuencia del ultimo mensaje recibido.
-        - address: Direccion a donde se debe enviar el ACK.
+        Parámetros:
+        - seq_number: Número de secuencia del último mensaje recibido.
+        - address: Dirección a donde se debe enviar el ACK.
         """
 
         ack = Message(MessageType.ACK, seq_number, "")
 
         rdm = random.randint(0, 9)
-        if rdm < 8:
+        if rdm < 3:
             print(colored(f"Se envia el ACK a {address} con el numero de secuencia {seq_number}\n", "yellow"))
             self.socket.sendto(ack.encode(), address)
         else:
@@ -129,7 +115,7 @@ class StopAndWaitProtocol:
         Recibe datos del socket y envia el ACK correspondiente.
         
         Devuelve:
-        - Una tupla con una instancia de Message con los datos recibidos y la direccion desde donde fue enviado.
+        - Una tupla con una instancia de Message con los datos recibidos y la dirección desde donde fue enviado.
         """
 
         encoded_msg, address = self.socket.recvfrom(MAX_LENGTH * 2)
@@ -138,6 +124,3 @@ class StopAndWaitProtocol:
 
         self.send_ack(msg.sequence_number, address)
         return msg, address
-
-    def close(self):
-        self.socket.close()

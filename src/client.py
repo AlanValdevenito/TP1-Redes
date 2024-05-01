@@ -1,8 +1,5 @@
-from stop_and_wait import StopAndWaitProtocol
-from message import *
 from download_handler import *
 from upload_handler import *
-from gbn import *
 
 UPLOAD = 'upload'
 DOWNLOAD = 'download'
@@ -14,26 +11,21 @@ class Client:
     def __init__(self, ip, port, protocol):
         self.ip = ip
         self.port = port
-
-        if protocol == STOP_AND_WAIT:
-            print("Client: Se eligio 'Stop and Wait' como protocolo.\n")
-            self.protocol = StopAndWaitProtocol(ip, port)
-        else:
-            print("Client: Se eligio 'GBN' como protocolo.\n")
-            self.protocol = GBN(ip, port)
+        self.protocol = ProtocolFactory.create_protocol(protocol, "127.0.0.1", RANDOM_PORT)
+        print(f"Client: Se eligio {self.protocol} como protocolo.\n")
 
     def upload(self, file_src, file_name, server_address):
         """
         Primero envia al servidor un pedido para hacer upload. Como respuesta a este 
         pedido, recibe un nuevo puerto a donde se comunicara el cliente.
 
-        Luego envia toda la data del archivo 'file_source' y al terminar envia un ultimo
+        Luego envia toda la data del archivo 'file_source' y al terminar envia un último
         mensaje para indicar que ha terminado.
 
-        Parametros:
+        Parámetros:
         - file_source: Nombre del archivo que se desea subir.
         - file_name: Nombre del archivo que se creara y donde se guardara el archivo subido.
-        - server_address: Direccion del servidor. Es una tupla (IP, PORT).
+        - server_address: Dirección del servidor. Es una tupla (IP, PORT).
         """
 
         sequence_number = 0
@@ -56,7 +48,7 @@ class Client:
                 self.protocol.send(request, server_address)
                 continue
 
-        sequence_number = 0  # ¿Por que antes estaba inicializado en -1?. Se cambio para que funcione GBN.
+        sequence_number = 0  # ¿Por qué antes estaba inicializado en -1?. Se cambió para que funcione GBN.
         with open(file_src, 'rb') as f:
             data = f.read()
             total = len(data)
@@ -83,10 +75,10 @@ class Client:
         Luego recibe toda la data del archivo 'file_name' y la va escribiendo en el
         archivo 'file_dst'.
 
-        Parametros:
+        Parámetros:
         - file_dst: Nombre del archivo que se creara y donde se guardara el archivo descargado.
         - file_name: Nombre del archivo que se desea descargar.
-        - server_address: Direccion del servidor. Es una tupla (IP, PORT).
+        - server_address: Dirección del servidor. Es una tupla (IP, PORT).
         """
 
         sequence_number = 0
@@ -101,18 +93,18 @@ class Client:
                 try:
                     msg, address = self.protocol.recv_data()
 
-                    # Si llega un mensaje de tipo END y tiene el numero de secuencia esperado (esta en orden)...
+                    # Si llega un mensaje de tipo END y tiene el número de secuencia esperado (está en orden)...
                     if msg.message_type == MessageType.END and msg.sequence_number == previous_seq_number + 1:
                         break
 
-                    # Si el mensaje tiene el numero de secuencia esperado (esta en orden)...
+                    # Si el mensaje tiene el número de secuencia esperado (esta en orden)...
                     if msg.sequence_number == previous_seq_number + 1:
                         f.write(msg.data)
                         print(colored(f"Writing data\n", "green"))
 
                         previous_seq_number = msg.sequence_number
 
-                    # Si el mensaje esta repetido o desordenado...
+                    # Si el mensaje está repetido o desordenado...
                     else:
                         print(f"Descartamos paquete con numero de secuencia {msg.sequence_number}\n")
                         continue

@@ -20,7 +20,7 @@ class DownloadHandler:
             self.protocol = StopAndWaitProtocol("127.0.0.1", RANDOM_PORT)
         else:
             print("DownloadHandler: Se eligio 'GBN' como protocolo.\n")
-            self.protocol = GBN("127.0.0.1", RANDOM_PORT)
+            self.protocol = GBNProtocol("127.0.0.1", RANDOM_PORT)
 
         self.protocol.listen()
 

@@ -1,10 +1,9 @@
-from stop_and_wait import *
+from protocol_factory import ProtocolFactory
 from threading import Thread
 from message import *
 from gbn import *
 
 RANDOM_PORT = 0
-STOP_AND_WAIT = '1'
 
 
 class UploadHandler:
@@ -14,14 +13,8 @@ class UploadHandler:
 
         self.thread = Thread(target=self.handle_upload)
         self.ended = False
-
-        if (protocol == STOP_AND_WAIT):
-            print("UploadHandler: Se eligio 'Stop and Wait' como protocolo.\n")
-            self.protocol = StopAndWaitProtocol("127.0.0.1", RANDOM_PORT)
-        else:
-            print("UploadHandler: Se eligio 'GBN' como protocolo.\n")
-            self.protocol = GBN("127.0.0.1", RANDOM_PORT)
-
+        self.protocol = ProtocolFactory.create_protocol(protocol, "127.0.0.1", RANDOM_PORT)
+        print(f"UploadHandler: Se eligio {self.protocol} como protocolo.\n")
         self.protocol.listen()
 
     def start(self):

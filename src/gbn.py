@@ -1,19 +1,15 @@
-from socket import *
 from message import Message, MessageType
+from protocol import Protocol, MAX_LENGTH
 from termcolor import colored
 import random
 import time
 
 WINDOW_SIZE = 10
-MAX_LENGTH = 64
 
 
-class GBN:
+class GBNProtocol(Protocol):
     def __init__(self, ip, port):
-        self.socket = socket(AF_INET, SOCK_DGRAM)
-        self.ip = ip
-        self.port = port
-
+        Protocol.__init__(self, ip, port)
         self.n = WINDOW_SIZE
         self.base = 0  # Número de secuencia del paquete no reconocido más antiguo.
         self.signumsec = 0  # Número de secuencia del siguiente paquete que se va a enviar.
@@ -23,22 +19,9 @@ class GBN:
         self.messages = {}
         self.lastackreceived = time.time()
 
-    def recv(self):
-        encoded_msg, address = self.socket.recvfrom(MAX_LENGTH * 2)
-        decoded_msg = Message.decode(encoded_msg)
-        # print(colored(f"Receiving {decoded_msg}\nfrom {address}\n", "green"))
-        return decoded_msg, address
-
     def send(self, request, address):
         self.socket.sendto(request.encode(), address)
-        # print(colored(f"Sending {request}\nto {address}\n", "green"))  
-
-    def listen(self):
-        self.socket.bind((self.ip, self.port))
-        print(f"Socket bindeado en {self.socket.getsockname()}\n")
-
-    def get_port(self):
-        return self.socket.getsockname()[1]
+        # print(colored(f"Sending {request}\nto {address}\n", "green"))
 
     def recv_data(self):
         encoded_msg, address = self.socket.recvfrom(MAX_LENGTH * 2)
@@ -78,7 +61,7 @@ class GBN:
         """
         Envia un ACK.
 
-        Parametros:
+        Parámetros:
         - seq_number: Número de secuencia del último mensaje recibido.
         - address: Dirección a donde se debe enviar el ACK.
         """
@@ -129,14 +112,14 @@ class GBN:
                 self.messages[self.signumsec] = encoded_msg
                 self.signumsec += 1
             else:
-                # Se recibio un ACK repetido. Por ejemplo: Inicialmente base = 0, signumsec = 1.
+                # Se recibió un ACK repetido. Por ejemplo: inicialmente, base = 0, signumsec = 1.
                 # 1) Enviamos el pkt0.
                 # 2) Enviamos el pkt1.
-                # 3) Recbimos ack0 con numero de secuencia 1 (proximo pkt esperado). Actualizamos base = 1.
-                # 4) Ocurre un timeout prematuro debito al pkt 1. Reenviamos el pkt 1.
-                # 5) Recibimos ack0 con numero de secuencia 1 (proximo pkt esperado). 
+                # 3) Recibimos ack0 con número de secuencia 1 (próximo pkt esperado). Actualizamos base = 1.
+                # 4) Ocurre un timeout prematuro debido al pkt 1. Reenviamos el pkt 1.
+                # 5) Recibimos ack0 con número de secuencia 1 (próximo pkt esperado).
 
-                # Luego, no actualizamos la base ya que es un acknowledge repetido.
+                # Luego, no actualizamos la base, ya que es un acknowledge repetido.
                 self.retransmitir_paquetes(address)
 
                 # Esperamos por un ACK de forma bloqueante que nos permita mover la ventana.
@@ -147,23 +130,24 @@ class GBN:
                     self.messages[self.signumsec] = encoded_msg
                     self.signumsec += 1
 
-        # Puede pasar que la diferencia no sea mayor a 0.0001 y al final no se envien todos los paquetes, incluyendo el 
+        # Puede pasar que la diferencia no sea mayor a 0.0001 y al final no se envíen todos los paquetes, incluyendo el
         # de tipo END. Esto como consecuencia deja bloqueado al cliente.
 
         # Si aumentamos 0.0001 a 0.000001 ya no tenemos este problema.
         print(f"Timeout: {time.time()} - {self.lastackreceived} = {time.time() - self.lastackreceived}\n")
-        if (time.time() - self.lastackreceived > 0.000001):
+        if time.time() - self.lastackreceived > 0.000001:
             self.retransmitir_paquetes(address)
 
     def recv_ack(self, base):
         """
         Recibe un ACK.
 
-        Parametros:
-        - base: Numero de secuencia del paquete no reconocido mas antiguo.
+        Parámetros:
+        - base: Número de secuencia del paquete no reconocido más antiguo.
 
         Devuelve:
-        - True si el numero de secuencia del ACK recibido coincide con el numero de secuencia base + 1 (proximo paquete esperado).
+        - True si el número de secuencia del ACK recibido coincide con el número de secuencia
+        base + 1 (próximo paquete esperado).
         - False en caso contrario.
         """
         try:
@@ -187,7 +171,7 @@ class GBN:
 
     def retransmitir_paquetes(self, address):
         """
-        Retransmite los paquetes que ya han sido enviados pero todavia no se han reconocido. Esto es
+        Retransmite los paquetes que ya han sido enviados, pero todavía no se han reconocido. Esto es
         el intervalo [base, signumsec-1].
         """
         print(colored("-------------------------------------", "blue"))
@@ -196,6 +180,3 @@ class GBN:
             print(colored(f"Re-sending {Message.decode(self.messages[i])}\nto {address}\n", "blue"))
             self.socket.sendto(self.messages[i], address)
         print(colored("-------------------------------------\n", "blue"))
-
-    def close(self):
-        self.socket.close()

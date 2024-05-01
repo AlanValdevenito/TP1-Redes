@@ -1,5 +1,3 @@
-from stop_and_wait import StopAndWaitProtocol
-from message import *
 from client import Client
 import argparse
 
