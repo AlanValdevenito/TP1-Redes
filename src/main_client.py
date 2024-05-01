@@ -17,14 +17,15 @@ def parse_args():
     parser.add_argument('-q', '--quiet', action='store_true', help='decrease output verbosity')
     parser.add_argument('-H', '--host', metavar='ADDR', help='server IP address')
     parser.add_argument('-p', '--port', metavar='PORT', help='server port')
-    parser.add_argument('-s', '--src', metavar='DIRPATH', help='source file path')
+    parser.add_argument('-s', '--src', metavar='FILEPATH', help='source file path')
     parser.add_argument('-d', '--dst', metavar='FILEPATH', help='destination file path')
     parser.add_argument('-n', '--name', metavar='FILENAME', help='file name')
+    parser.add_argument('-P', '--protocol', metavar='PROTOCOL', help='protocol number')
     return parser.parse_args()
 
 def main():
     args = parse_args()
-    client = Client(IP, PORT)
+    client = Client(IP, PORT, args.protocol)
     server_address = (IP, SERVER_PORT)
 
     if args.command == UPLOAD:

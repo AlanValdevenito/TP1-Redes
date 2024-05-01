@@ -7,13 +7,19 @@ from gbn import *
 UPLOAD = 'upload'
 DOWNLOAD = 'download'
 
+STOP_AND_WAIT = '1'
+
 class Client:
-    def __init__(self, ip, port):
+    def __init__(self, ip, port, protocol):
         self.ip = ip
         self.port = port
 
-        # self.protocol = StopAndWaitProtocol(ip, port)
-        self.protocol = GBN(ip, port)
+        if (protocol == STOP_AND_WAIT):
+            print("Client: Se eligio 'Stop and Wait' como protocolo.\n")
+            self.protocol = StopAndWaitProtocol(ip, port)
+        else:
+            print("Client: Se eligio 'GBN' como protocolo.\n")
+            self.protocol = GBN(ip, port)
 
     def upload(self, file_src, file_name, server_address):
         """

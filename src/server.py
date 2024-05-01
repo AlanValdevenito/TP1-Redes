@@ -7,7 +7,7 @@ UPLOAD = 'upload'
 DOWNLOAD = 'download'
 
 class Server:
-    def __init__(self, ip, port):
+    def __init__(self, ip, port, number_protocol):
         self.ip = ip
         self.port = port
 
@@ -15,6 +15,7 @@ class Server:
         self.port_by_address = {}
 
         self.protocol = StopAndWaitProtocol(ip, port)
+        self.number_protocol = number_protocol
     
     def start(self):
         """
@@ -45,7 +46,7 @@ class Server:
                     
                     # Si es la primer conexion de parte del cliente, creo el handler
                     if address not in self.port_by_address.keys():
-                        upload_handler = UploadHandler(address, msg.file_name) 
+                        upload_handler = UploadHandler(address, msg.file_name, self.number_protocol) 
                         self.sessions.append(upload_handler)
                         port = self.sessions[-1].get_port()
                         self.port_by_address[address] = port
@@ -58,7 +59,7 @@ class Server:
                 elif msg.message_type == MessageType.INSTRUCTION and msg.data == DOWNLOAD:
 
                     if address not in self.port_by_address.keys():
-                        download_handler = DownloadHandler(address, msg.file_name)
+                        download_handler = DownloadHandler(address, msg.file_name, self.number_protocol)
                         self.sessions.append(download_handler)
                         port = download_handler.get_port()
                         self.port_by_address[address] = port

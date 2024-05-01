@@ -4,17 +4,23 @@ from message import *
 from gbn import *
 
 RANDOM_PORT = 0
+STOP_AND_WAIT = '1'
 
 class UploadHandler:
-    def __init__(self, client_address, filename):
+    def __init__(self, client_address, filename, protocol):
         self.client_address = client_address
         self.filename = filename
 
         self.thread = Thread(target = self.handle_upload)
         self.ended = False
+
+        if (protocol == STOP_AND_WAIT):
+            print("UploadHandler: Se eligio 'Stop and Wait' como protocolo.\n")
+            self.protocol = StopAndWaitProtocol("127.0.0.1", RANDOM_PORT)
+        else:
+            print("UploadHandler: Se eligio 'GBN' como protocolo.\n")
+            self.protocol = GBN("127.0.0.1", RANDOM_PORT)
         
-        # self.protocol = StopAndWaitProtocol("127.0.0.1", RANDOM_PORT)
-        self.protocol = GBN("127.0.0.1", RANDOM_PORT)
         self.protocol.listen()
 
     def start(self):
