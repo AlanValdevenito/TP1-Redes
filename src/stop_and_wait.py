@@ -1,24 +1,16 @@
 from message import *
 from protocol import Protocol
-import random
 
 from termcolor import colored
 
-MAX_LENGTH = 64
-
+MAX_LENGTH = 1024
 
 class StopAndWaitProtocol(Protocol):
     def __init__(self, ip, port):
         Protocol.__init__(self, ip, port)
 
     def send(self, request, address):
-        rdm = random.randint(0, 9)
-        if rdm < 3:
-            # print(colored(f"Sending {request}\nto {address}\n", "green"))
-            self.socket.sendto(request.encode(), address)
-        else:
-            # print(colored(f"Lost {request}\nto {address}\n", "red"))
-            pass
+        self.socket.sendto(request.encode(), address)
 
     def send_data(self, message, address):
         """
@@ -38,24 +30,19 @@ class StopAndWaitProtocol(Protocol):
             try:
                 if count >= 10:
                     break
-                rdm = random.randint(0, 9)
-                if rdm < 3:
-                    print(colored(f"Sending {message}\nto {address}\n", "green"))
-                    self.socket.sendto(encoded_msg, address)
-                else:
-                    # Puede darse el caso de que el que está mandando el archivo
-                    # mande un END, el otro conteste con un ACK, pero el ACK se pierde
-                    # el que mando el ACK se desconecta
-                    #
-                    # Cuento cuantos END se perdieron. Si llega a 10
-                    # es probable que el receiver se haya desconectado
-                    # en tal caso salgo del send_data
-                    if message.message_type == MessageType.END:
-                        count += 1
-                        print(colored("Se perdio el END", "red"))
-                    else:
-                        print(colored(f"Lost {message}\nto {address}\n", "red"))
-
+                # Puede darse el caso de que el que está mandando el archivo
+                # mande un END, el otro conteste con un ACK, pero el ACK se pierde
+                # el que mando el ACK se desconecta
+                #
+                # Cuento cuantos END se perdieron. Si llega a 10
+                # es probable que el receiver se haya desconectado
+                # en tal caso salgo del send_data
+                if message.message_type == MessageType.END:
+                    count += 1
+                
+                print(colored(f"Sending {message}\nto {address}\n", "green"))
+                self.socket.sendto(encoded_msg, address)
+                
                 self.socket.settimeout(0.05)
                 msg_acked = self.recv_ack(message.sequence_number)
 
@@ -102,13 +89,8 @@ class StopAndWaitProtocol(Protocol):
         """
 
         ack = Message(MessageType.ACK, seq_number, "")
-
-        rdm = random.randint(0, 9)
-        if rdm < 3:
-            print(colored(f"Se envia el ACK a {address} con el numero de secuencia {seq_number}\n", "yellow"))
-            self.socket.sendto(ack.encode(), address)
-        else:
-            print(colored(f"Se perdio el ACK con el numero de secuencia {seq_number}\n", "red"))
+        print(colored(f"Se envia el ACK a {address} con el numero de secuencia {seq_number}\n", "yellow"))
+        self.socket.sendto(ack.encode(), address)
 
     def recv_data(self):
         """

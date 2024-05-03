@@ -1,7 +1,7 @@
 from socket import *
 from message import Message
 
-MAX_LENGTH = 64
+MAX_LENGTH = 1024
 
 
 class Protocol:
