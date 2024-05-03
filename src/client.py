@@ -106,7 +106,7 @@ class Client:
 
                     # Si el mensaje está repetido o desordenado...
                     else:
-                        print(f"Descartamos paquete con numero de secuencia {msg.sequence_number}\n")
+                        # print(f"Descartamos paquete con numero de secuencia {msg.sequence_number}\n")
                         continue
 
                 except TimeoutError:

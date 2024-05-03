@@ -26,7 +26,7 @@ class GBNProtocol(Protocol):
     def recv_data(self):
         encoded_msg, address = self.socket.recvfrom(MAX_LENGTH * 2)
         decoded_msg = Message.decode(encoded_msg)
-        print(colored(f"Receiving {decoded_msg}\nfrom {address}\n", "green"))
+        # print(colored(f"Receiving {decoded_msg}\nfrom {address}\n", "green"))
 
         if decoded_msg.message_type == MessageType.ACK:
             if decoded_msg.sequence_number < self.base:
@@ -48,11 +48,14 @@ class GBNProtocol(Protocol):
         # 4) Recibimos el pkt3: sequence_number = 3, highest_inorder_seqnum = 2.
         # Se descarta el pkt3 y enviamos ACK con número de secuencia 2 (próximo paquete esperado).
         if decoded_msg.sequence_number != self.highest_inorder_seqnum:
-            print(
-                f"No se sigue el orden, descartamos el paquete y reenviamos el ACK con numero de secuencia {self.highest_inorder_seqnum}\n")
+            print(colored(f"Orden incorrecto", "red")) 
+            print(colored(f"Receiving packet {decoded_msg.sequence_number} from {address}", "red")) 
+            print(colored(f"Descartamos el paquete", "red"))
             self.send_ack(self.highest_inorder_seqnum, address)
             return decoded_msg, address  # Se descarta el paquete en client.py
 
+        print(colored(f"Orden correcto", "green")) 
+        print(colored(f"Receiving packet {decoded_msg.sequence_number} from {address}", "green")) 
         self.highest_inorder_seqnum += 1
         self.send_ack(self.highest_inorder_seqnum, address)
         return decoded_msg, address
@@ -78,7 +81,7 @@ class GBNProtocol(Protocol):
             print(colored(f"Se perdio el ACK con el numero de secuencia {seq_number}\n", "red"))"""
 
     def send_data(self, message, address):
-        print(f"n: {self.n}, base: {self.base}, signumsec: {self.signumsec}\n")
+        print(f"n: {self.n}, base: {self.base}, signumsec: {self.signumsec}")
         encoded_msg = message.encode()
 
         self.messages[self.signumsec] = encoded_msg
@@ -88,7 +91,8 @@ class GBNProtocol(Protocol):
         self.recv_ack(self.base)
 
         if self.signumsec <= self.base + self.n - 1:
-            print(colored(f"Sending packet {self.signumsec} {message}\nto {address}\n", "green"))            
+            # print(colored(f"Sending packet {self.signumsec} {message}\nto {address}\n", "green"))            
+            print(colored(f"Sending packet {message.sequence_number} to {address}\n", "green")) 
             self.socket.sendto(encoded_msg, address)
 
             """rdm = random.randint(0, 9)
@@ -101,7 +105,7 @@ class GBNProtocol(Protocol):
             self.signumsec += 1
 
         else:
-            print(colored("Ventana llena", "red"))
+            print(colored("Ventana llena\n", "red"))
             """print(colored(f"Lost {message}\nto {address}\n", "red"))
             self.socket.setblocking(True)
 
@@ -130,7 +134,8 @@ class GBNProtocol(Protocol):
 
             # Esperamos por un ACK de forma bloqueante que nos permita mover la ventana.
             # Cuando llega el ACK reenviamos el paquete que quedo fuera de la ventana.
-            print(colored(f"Sending {message}\nto {address}\n", "green"))
+            print(colored(f"Sending packet {message.sequence_number} to {address}\n", "green")) 
+            # print(colored(f"Sending {message}\nto {address}\n", "green"))
             self.socket.sendto(encoded_msg, address)
             self.signumsec += 1
 
@@ -138,7 +143,7 @@ class GBNProtocol(Protocol):
         # de tipo END. Esto como consecuencia deja bloqueado al cliente.
 
         # Si aumentamos 0.0001 a 0.000001 ya no tenemos este problema.
-        print(f"Timeout: {time.time()} - {self.lastackreceived} = {time.time() - self.lastackreceived}\n")
+        # print(f"Timeout: {time.time()} - {self.lastackreceived} = {time.time() - self.lastackreceived}\n")
         if time.time() - self.lastackreceived > 0.1:
             self.retransmitir_paquetes(address)
         
@@ -189,10 +194,12 @@ class GBNProtocol(Protocol):
         Retransmite los paquetes que ya han sido enviados, pero todavía no se han reconocido. Esto es
         el intervalo [base, signumsec-1].
         """
+        print(colored("Timeout", "blue"))
         print(colored("-------------------------------------", "blue"))
         self.lastackreceived = time.time()
         print(colored(f"Reenviando paquetes con numero de secuencia [{self.base}, {self.signumsec - 1}]\n", "blue"))
         for i in range(self.base, self.signumsec):
-            print(colored(f"Re-sending packet {i} {Message.decode(self.messages[i])}\nto {address}\n", "blue"))
+            print(colored(f"Re-sending packet {i} to {address}", "blue"))
+            # print(colored(f"Re-sending packet {i} {Message.decode(self.messages[i])}\nto {address}\n", "blue"))
             self.socket.sendto(self.messages[i], address)
         print(colored("-------------------------------------\n", "blue"))

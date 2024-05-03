@@ -3,7 +3,7 @@ from protocol import Protocol
 
 from termcolor import colored
 
-MAX_LENGTH = 1024
+MAX_LENGTH = 4096
 
 class StopAndWaitProtocol(Protocol):
     def __init__(self, ip, port):
