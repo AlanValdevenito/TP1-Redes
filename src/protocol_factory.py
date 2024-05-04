@@ -1,7 +1,6 @@
 from stop_and_wait import StopAndWaitProtocol
 from gbn import GBNProtocol
-
-STOP_AND_WAIT = '1'
+from config import STOP_AND_WAIT
 
 
 class ProtocolFactory:

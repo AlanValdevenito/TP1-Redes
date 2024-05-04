@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 from socket import *
 from message import Message, MessageType
-
-MAX_LENGTH = 64
+from config import MAX_LENGTH
 
 
 class Protocol(ABC):

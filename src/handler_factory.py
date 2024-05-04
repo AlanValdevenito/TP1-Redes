@@ -1,8 +1,6 @@
 from upload_handler import UploadHandler
 from download_handler import DownloadHandler
-
-UPLOAD = 'upload'
-DOWNLOAD = 'download'
+from config import UPLOAD, DOWNLOAD
 
 
 class HandleFactory:

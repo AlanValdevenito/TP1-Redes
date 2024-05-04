@@ -1,11 +1,6 @@
-from download_handler import *
 from logger import Logger
 from upload_handler import *
-
-UPLOAD = 'upload'
-DOWNLOAD = 'download'
-
-STOP_AND_WAIT = '1'
+from config import UPLOAD, DOWNLOAD
 
 
 class Client:

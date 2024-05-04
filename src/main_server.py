@@ -1,9 +1,7 @@
 from server import *
+from config import IP, SERVER_PORT, DEFAULT_PATH
+from utils import check_server_args
 import argparse
-
-IP = "127.0.0.1"
-PORT = 12000
-DEFAULT_PATH = 'server_storage/'
 
 
 def parse_args():
@@ -19,8 +17,10 @@ def parse_args():
 
 def main():
     args = parse_args()
+    if not check_server_args(args):
+        return
 
-    server = Server(IP, PORT, args)
+    server = Server(IP, SERVER_PORT, args)
     server.start()
 
 

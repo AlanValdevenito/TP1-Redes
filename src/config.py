@@ -1,0 +1,9 @@
+UPLOAD = 'upload'
+DOWNLOAD = 'download'
+RANDOM_PORT = 0
+STOP_AND_WAIT = '1'
+IP = "127.0.0.1"
+SERVER_PORT = 12000
+PORT = 8000
+DEFAULT_PATH = 'server_storage/'
+MAX_LENGTH = 64

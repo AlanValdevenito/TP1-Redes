@@ -1,12 +1,7 @@
 from client import Client
+from utils import check_client_args
+from config import UPLOAD, DOWNLOAD, IP, SERVER_PORT, PORT
 import argparse
-
-IP = "127.0.0.1"
-PORT = 8000
-SERVER_PORT = 12000
-
-UPLOAD = 'upload'
-DOWNLOAD = 'download'
 
 
 def parse_args():
@@ -23,25 +18,9 @@ def parse_args():
     return parser.parse_args()
 
 
-def check_args(args):
-    if args.command == UPLOAD and not args.src:
-        print('Error: Source file path is required for upload command')
-        return False
-    if args.command == DOWNLOAD and not args.dst:
-        print('Error: Destination file path is required for download command')
-        return False
-    if not args.name:
-        print('Error: File name is required')
-        return False
-    if args.verbose and args.quiet:
-        print('Error: Cannot set both verbose and quiet flags')
-        return False
-    return True
-
-
 def main():
     args = parse_args()
-    if not check_args(args):
+    if not check_client_args(args):
         return
 
     client = Client(IP, PORT, args)

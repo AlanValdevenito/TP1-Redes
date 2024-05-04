@@ -1,9 +1,7 @@
 from protocol_factory import ProtocolFactory
 from threading import Thread
+from config import RANDOM_PORT
 from gbn import *
-
-RANDOM_PORT = 0
-STOP_AND_WAIT = '1'
 
 
 class DownloadHandler:
