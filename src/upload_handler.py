@@ -1,6 +1,5 @@
 from protocol_factory import ProtocolFactory
 from threading import Thread
-from message import *
 from gbn import *
 
 RANDOM_PORT = 0
@@ -39,18 +38,19 @@ class UploadHandler:
                 try:
                     msg, address = self.protocol.recv_data()
 
-                    # Si llega un mensaje de tipo END y tiene el numero de secuencia esperado (esta en orden)...
+                    # Si llega un mensaje de tipo END y tiene el número de secuencia esperado (esta en orden)...
                     if msg.message_type == MessageType.END and msg.sequence_number == previous_seq_number + 1:
+                        self.protocol.send_end(msg.sequence_number, self.client_address)
                         break
 
-                    # Si el mensaje tiene el numero de secuencia esperado (esta en orden)...
+                    # Si el mensaje tiene el número de secuencia esperado (esta en orden)...
                     if msg.sequence_number == previous_seq_number + 1:
                         f.write(msg.data)
                         print(colored(f"Writing data\n", "green"))
 
                         previous_seq_number = msg.sequence_number
 
-                    # Si el mensaje esta repetido o desordenado...
+                    # Si el mensaje está repetido o desordenado...
                     else:
                         # print(colored(f"Descartamos paquete con numero de secuencia {msg.sequence_number}\n", "red"))
                         pass

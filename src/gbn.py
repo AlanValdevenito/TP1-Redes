@@ -1,7 +1,6 @@
 from message import Message, MessageType
 from protocol import Protocol, MAX_LENGTH
 from termcolor import colored
-import random
 import time
 
 WINDOW_SIZE = 10
@@ -54,10 +53,11 @@ class GBNProtocol(Protocol):
             return decoded_msg, address  # Se descarta el paquete en client.py
 
         self.highest_inorder_seqnum += 1
-        self.send_ack(self.highest_inorder_seqnum, address)
+        is_end = decoded_msg.message_type == MessageType.END
+        self.send_ack(self.highest_inorder_seqnum, address, is_end)
         return decoded_msg, address
 
-    def send_ack(self, seq_number, address):
+    def send_ack(self, seq_number, address, is_end=False):
         """
         Envia un ACK.
 
@@ -67,8 +67,12 @@ class GBNProtocol(Protocol):
         """
 
         ack = Message(MessageType.ACK, seq_number, "")
+        if is_end:
+            ack = Message(MessageType.ACK_END, seq_number, "")
         self.socket.sendto(ack.encode(), address)
-        print(colored(f"Se envia el ACK a {address} con el numero de secuencia {seq_number} (proximo paquete esperado)\n", "yellow"))
+        print(
+            colored(f"Se envia el ACK a {address} con el numero de secuencia {seq_number} (proximo paquete esperado)\n",
+                    "yellow"))
 
         """rdm = random.randint(0, 9)
         if rdm < 2:
@@ -79,16 +83,14 @@ class GBNProtocol(Protocol):
 
     def send_data(self, message, address):
         print(f"n: {self.n}, base: {self.base}, signumsec: {self.signumsec}\n")
+
         encoded_msg = message.encode()
-
-        
-
         # Intentamos recibir un ACK de forma no bloqueante que nos permita mover la ventana.
         self.socket.setblocking(False)
         self.recv_ack(self.base)
 
         if self.signumsec <= self.base + self.n - 1:
-            print(colored(f"Sending packet {self.signumsec} {message}\nto {address}\n", "green"))            
+            print(colored(f"Sending packet {self.signumsec} {message}\nto {address}\n", "green"))
             self.socket.sendto(encoded_msg, address)
             self.messages[message.sequence_number] = encoded_msg
             """rdm = random.randint(0, 9)
@@ -144,33 +146,31 @@ class GBNProtocol(Protocol):
                     self.socket.sendto(encoded_msg, address)
                     message_sent = True
                     self.signumsec += 1
-                
+
                 # si no me llegan acks, retransmito
                 except TimeoutError:
                     self.retransmitir_paquetes(address)
-            
+
             # si el mensaje que queria enviar no es END, salgo
             if message.message_type != MessageType.END:
                 return
-        # Puede pasar que la diferencia no sea mayor a 0.0001 y al final no se envíen todos los paquetes, incluyendo el
-        # de tipo END. Esto como consecuencia deja bloqueado al cliente.
+            # Puede pasar que la diferencia no sea mayor a 0.0001 y al final no se envíen
+            # todos los paquetes, incluyendo el de tipo END.
+            # Esto como consecuencia deja bloqueado al cliente.
 
         # Si aumentamos 0.0001 a 0.000001 ya no tenemos este problema.
         self.socket.setblocking(False)
         print(f"Timeout: {time.time()} - {self.lastackreceived} = {time.time() - self.lastackreceived}\n")
         if time.time() - self.lastackreceived > 0.1:
             self.retransmitir_paquetes(address)
-        
+
         if message.message_type == MessageType.END:
             print("Llega END, mandamos todos")
-            count = 0
             while self.signumsec != self.base:
-                if count >= 10*self.n:
-                    break
                 self.recv_ack(self.base)
                 if time.time() - self.lastackreceived > 0.1:
                     self.retransmitir_paquetes(address)
-                    count += 1
+            print("Terminamos de mandar todos los paquetes")
 
     def recv_ack(self, base):
         """

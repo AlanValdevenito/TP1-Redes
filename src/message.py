@@ -8,6 +8,7 @@ class MessageType(Enum):
     ACK = 4
     PORT = 5  # para mandarle el puerto al cliente
     END = 6  # para avisar que termine de mandar el archivo
+    ACK_END = 7
 
 
 class Message:
@@ -45,6 +46,5 @@ class Message:
         return f"\n--------------------------\
                 \nmessage_type = {self.message_type}\
                 \nsequence_number = {self.sequence_number}\
-                \ndata = [{self.data}]\
                 \nfile_name = {self.file_name}\
                 \n--------------------------"

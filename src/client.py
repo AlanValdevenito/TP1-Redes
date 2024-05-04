@@ -1,3 +1,5 @@
+import time
+
 from download_handler import *
 from upload_handler import *
 
@@ -65,6 +67,7 @@ class Client:
 
         end_message = Message(MessageType.END, sequence_number, "")
         self.protocol.send_data(end_message, server_address)
+        self.protocol.wait_end(sequence_number, server_address)
         print("Cliente termino")
 
     def download(self, file_dst, file_name, server_address):
@@ -92,9 +95,10 @@ class Client:
             while True:
                 try:
                     msg, address = self.protocol.recv_data()
-                    
+
                     # Si llega un mensaje de tipo END y tiene el número de secuencia esperado (está en orden)...
                     if msg.message_type == MessageType.END and msg.sequence_number == previous_seq_number + 1:
+                        self.protocol.send_end(msg.sequence_number, address)
                         break
 
                     # Si el mensaje tiene el número de secuencia esperado (esta en orden)...

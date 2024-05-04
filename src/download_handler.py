@@ -1,6 +1,5 @@
-from stop_and_wait import *
+from protocol_factory import ProtocolFactory
 from threading import Thread
-from message import *
 from gbn import *
 
 RANDOM_PORT = 0
@@ -14,14 +13,8 @@ class DownloadHandler:
 
         self.thread = Thread(target=self.handle_download)
         self.ended = False
-
-        if protocol == STOP_AND_WAIT:
-            print("DownloadHandler: Se eligio 'Stop and Wait' como protocolo.\n")
-            self.protocol = StopAndWaitProtocol("127.0.0.1", RANDOM_PORT)
-        else:
-            print("DownloadHandler: Se eligio 'GBN' como protocolo.\n")
-            self.protocol = GBNProtocol("127.0.0.1", RANDOM_PORT)
-
+        self.protocol = ProtocolFactory.create_protocol(protocol, "127.0.0.1", RANDOM_PORT)
+        print(f"DownloadHandler: Se eligio {self.protocol} como protocolo.\n")
         self.protocol.listen()
 
     def start(self):
@@ -58,6 +51,6 @@ class DownloadHandler:
 
         end_message = Message(MessageType.END, sequence_number, "")
         self.protocol.send_data(end_message, self.client_address)
-
+        self.protocol.wait_end(sequence_number, self.client_address)
         self.ended = True
         print("Download handler termino")
