@@ -78,7 +78,7 @@ class StopAndWaitProtocol(Protocol):
         encoded_msg, address = self.socket.recvfrom(MAX_LENGTH * 2)
         msg = Message.decode(encoded_msg)
 
-        self.logger.log(colored(f"Receiving packet with sequence number {msg.sequence_number}from {address}", "green"))
+        self.logger.log(colored(f"Receiving packet with sequence number {msg.sequence_number} from {address}", "green"))
 
         self.send_ack(msg.sequence_number, address)
         return msg, address
