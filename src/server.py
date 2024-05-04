@@ -1,26 +1,24 @@
 import os
-from download_handler import *
-from stop_and_wait import StopAndWaitProtocol
-from upload_handler import *
 
-UPLOAD = 'upload'
-DOWNLOAD = 'download'
+from message import MessageType, Message
+from logger import Logger
+from stop_and_wait import StopAndWaitProtocol
+from handler_factory import *
 
 
 class Server:
-    def __init__(self, ip, port, number_protocol, storage_dir):
-        self.storage_dir = storage_dir if storage_dir[-1] == '/' else storage_dir + '/'
+    def __init__(self, ip, port, args):
+        self.storage_dir = args.storage if args.storage[-1] == '/' else args.storage + '/'
         self.ip = ip
         self.port = port
+        self.logger = Logger(args.verbose)
 
         self.sessions = []
         self.port_by_address = {}
 
-        self.protocol = StopAndWaitProtocol(ip, port)
-        self.number_protocol = number_protocol
-
-        if not os.path.exists(self.storage_dir):
-            os.makedirs(self.storage_dir)
+        self.protocol = StopAndWaitProtocol(ip, port, self.logger)
+        self.number_protocol = args.protocol
+        os.makedirs(self.storage_dir, exist_ok=True)
 
     def start(self):
         """
@@ -46,29 +44,19 @@ class Server:
 
                 # Si el mensaje es un request de upload, lanzo un thread para manejar
                 # el upload. El uploadHandler le manda su puerto al cliente para comunicarse
-                if msg.message_type == MessageType.INSTRUCTION and msg.data == UPLOAD:
-
+                if msg.message_type == MessageType.INSTRUCTION:
                     # Si es la primera conexión de parte del cliente, creo el handler
                     if address not in self.port_by_address.keys():
-                        upload_handler = UploadHandler(address, self.storage_dir + msg.file_name, self.number_protocol)
-                        self.sessions.append(upload_handler)
-                        port = self.sessions[-1].get_port()
+                        handler = HandleFactory.create_handle(msg.data, address, self.storage_dir + msg.file_name,
+                                                              self.number_protocol, self.logger)
+                        self.sessions.append(handler)
+                        port = handler.get_port()
                         self.port_by_address[address] = port
                         self.sessions[-1].start()
 
-                    port_msg = Message(MessageType.PORT, 0, str(self.port_by_address[address]), "")
-                    self.protocol.send(port_msg, address)
-
-                # Si el request es de download, lo mismo pero con downloadHandler
-                elif msg.message_type == MessageType.INSTRUCTION and msg.data == DOWNLOAD:
-
-                    if address not in self.port_by_address.keys():
-                        download_handler = DownloadHandler(address, self.storage_dir + msg.file_name,
-                                                           self.number_protocol)
-                        self.sessions.append(download_handler)
-                        port = download_handler.get_port()
-                        self.port_by_address[address] = port
-                        self.sessions[-1].start()
+                    if msg.data == UPLOAD:
+                        port_msg = Message(MessageType.PORT, 0, str(self.port_by_address[address]), "")
+                        self.protocol.send(port_msg, address)
 
                 for session in self.sessions:  # Join a las sesiones que terminaron
                     if session.ended:

@@ -6,14 +6,15 @@ RANDOM_PORT = 0
 
 
 class UploadHandler:
-    def __init__(self, client_address, filename, protocol):
+    def __init__(self, client_address, filename, protocol, logger):
         self.client_address = client_address
         self.filename = filename
+        self.logger = logger
 
         self.thread = Thread(target=self.handle_upload)
         self.ended = False
-        self.protocol = ProtocolFactory.create_protocol(protocol, "127.0.0.1", RANDOM_PORT)
-        print(f"UploadHandler: Se eligio {self.protocol} como protocolo.\n")
+        self.protocol = ProtocolFactory.create_protocol(protocol, "127.0.0.1", RANDOM_PORT, logger)
+        self.logger.log(f"UploadHandler: Se eligio {self.protocol} como protocolo.\n")
         self.protocol.listen()
 
     def start(self):
@@ -46,7 +47,7 @@ class UploadHandler:
                     # Si el mensaje tiene el número de secuencia esperado (esta en orden)...
                     if msg.sequence_number == previous_seq_number + 1:
                         f.write(msg.data)
-                        print(colored(f"Writing data\n", "green"))
+                        self.logger.log(colored(f"Writing data\n", "green"))
 
                         previous_seq_number = msg.sequence_number
 
@@ -61,4 +62,4 @@ class UploadHandler:
 
         self.protocol.close()
         self.ended = True
-        print("Upload handler termino")
+        self.logger.log("Upload handler termino")

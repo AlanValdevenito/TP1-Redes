@@ -20,7 +20,7 @@ def parse_args():
 def main():
     args = parse_args()
 
-    server = Server(IP, PORT, args.protocol, args.storage)
+    server = Server(IP, PORT, args)
     server.start()
 
 

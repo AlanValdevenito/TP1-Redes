@@ -1,6 +1,5 @@
-import time
-
 from download_handler import *
+from logger import Logger
 from upload_handler import *
 
 UPLOAD = 'upload'
@@ -10,11 +9,12 @@ STOP_AND_WAIT = '1'
 
 
 class Client:
-    def __init__(self, ip, port, protocol):
+    def __init__(self, ip, port, args):
         self.ip = ip
         self.port = port
-        self.protocol = ProtocolFactory.create_protocol(protocol, "127.0.0.1", RANDOM_PORT)
-        print(f"Client: Se eligio {self.protocol} como protocolo.\n")
+        self.logger = Logger(args.verbose)
+        self.protocol = ProtocolFactory.create_protocol(args.protocol, "127.0.0.1", RANDOM_PORT, self.logger)
+        self.logger.log(f"Client: Se eligio {self.protocol} como protocolo.\n")
 
     def upload(self, file_src, file_name, server_address):
         """
@@ -68,7 +68,7 @@ class Client:
         end_message = Message(MessageType.END, sequence_number, "")
         self.protocol.send_data(end_message, server_address)
         self.protocol.wait_end(sequence_number, server_address)
-        print("Cliente termino")
+        self.logger.log("Cliente termino")
 
     def download(self, file_dst, file_name, server_address):
         """
@@ -101,16 +101,16 @@ class Client:
                         self.protocol.send_end(msg.sequence_number, address)
                         break
 
-                    # Si el mensaje tiene el número de secuencia esperado (esta en orden)...
+                    # Si el mensaje tiene el número de secuencia esperado (está en orden)...
                     if msg.sequence_number == previous_seq_number + 1:
                         f.write(msg.data)
-                        print(colored(f"Writing data\n", "green"))
+                        self.logger.log(colored(f"Writing data\n", "green"))
 
                         previous_seq_number = msg.sequence_number
 
                     # Si el mensaje está repetido o desordenado...
                     else:
-                        # print(f"Descartamos paquete con numero de secuencia {msg.sequence_number}\n")
+                        # self.logger.log(f"Descartamos paquete con numero de secuencia {msg.sequence_number}\n")
                         continue
 
                 except TimeoutError:
@@ -118,4 +118,4 @@ class Client:
                     continue
 
         self.protocol.close()
-        print("Cliente termino")
+        self.logger.log("Cliente termino")

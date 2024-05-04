@@ -7,14 +7,15 @@ STOP_AND_WAIT = '1'
 
 
 class DownloadHandler:
-    def __init__(self, client_address, filename, protocol):
+    def __init__(self, client_address, filename, protocol, logger):
         self.client_address = client_address
         self.filename = filename
+        self.logger = logger
 
         self.thread = Thread(target=self.handle_download)
         self.ended = False
-        self.protocol = ProtocolFactory.create_protocol(protocol, "127.0.0.1", RANDOM_PORT)
-        print(f"DownloadHandler: Se eligio {self.protocol} como protocolo.\n")
+        self.protocol = ProtocolFactory.create_protocol(protocol, "127.0.0.1", RANDOM_PORT, logger)
+        self.logger.log(f"DownloadHandler: Se eligio {self.protocol} como protocolo.\n")
         self.protocol.listen()
 
     def start(self):
@@ -53,4 +54,4 @@ class DownloadHandler:
         self.protocol.send_data(end_message, self.client_address)
         self.protocol.wait_end(sequence_number, self.client_address)
         self.ended = True
-        print("Download handler termino")
+        self.logger.log("Download handler termino")

@@ -6,8 +6,8 @@ STOP_AND_WAIT = '1'
 
 class ProtocolFactory:
     @staticmethod
-    def create_protocol(protocol_type, ip, port):
+    def create_protocol(protocol_type, ip, port, logger):
         if protocol_type == STOP_AND_WAIT:
-            return StopAndWaitProtocol(ip, port)
+            return StopAndWaitProtocol(ip, port, logger)
         else:
-            return GBNProtocol(ip, port)
+            return GBNProtocol(ip, port, logger)
