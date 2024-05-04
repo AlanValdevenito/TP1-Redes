@@ -32,7 +32,7 @@ class Client:
         request = Message(MessageType.INSTRUCTION, sequence_number, UPLOAD, file_name)
 
         self.protocol.send(request, server_address)  # Mando un request para hacer upload
-        self.protocol.socket.settimeout(1)
+        self.protocol.socket.settimeout(0.1)
 
         received_port = False
         while not received_port:
