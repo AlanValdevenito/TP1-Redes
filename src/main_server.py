@@ -1,8 +1,7 @@
+import argparse
 from server import *
 from config import IP, SERVER_PORT, DEFAULT_PATH
 from utils import check_server_args
-import argparse
-
 
 def parse_args():
     parser = argparse.ArgumentParser(description='<command description>')
@@ -14,14 +13,13 @@ def parse_args():
     parser.add_argument('-P', '--protocol', metavar='PROTOCOL', help='protocol number')
     return parser.parse_args()
 
-
 def main():
     args = parse_args()
+
     if not check_server_args(args):
         return
 
     server = Server(IP, SERVER_PORT, args)
     server.start()
-
 
 main()

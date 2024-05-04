@@ -1,10 +1,8 @@
 import os
-
 from message import MessageType, Message
 from logger import Logger
 from stop_and_wait import StopAndWaitProtocol
 from handler_factory import *
-
 
 class Server:
     def __init__(self, ip, port, args):
@@ -32,20 +30,16 @@ class Server:
 
         Cada cierto tiempo se fija si algún thread termino y en tal caso lo joinea.
         """
-
         self.protocol.listen()
         self.protocol.socket.setblocking(True)
 
         while True:
             try:
-                # print(f"Server listening...")
                 msg, address = self.protocol.recv()
                 self.protocol.socket.settimeout(1)
 
-                # Si el mensaje es un request de upload, lanzo un thread para manejar
-                # el upload. El uploadHandler le manda su puerto al cliente para comunicarse
                 if msg.message_type == MessageType.INSTRUCTION:
-                    # Si es la primera conexión de parte del cliente, creo el handler
+
                     if address not in self.port_by_address.keys():
                         handler = HandleFactory.create_handle(msg.data, address, self.storage_dir + msg.file_name,
                                                               self.number_protocol, self.logger)
@@ -58,7 +52,7 @@ class Server:
                         port_msg = Message(MessageType.PORT, 0, str(self.port_by_address[address]), "")
                         self.protocol.send(port_msg, address)
 
-                for session in self.sessions:  # Join a las sesiones que terminaron
+                for session in self.sessions:
                     if session.ended:
                         session.thread.join()
 

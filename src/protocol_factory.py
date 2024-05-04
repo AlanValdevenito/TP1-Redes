@@ -2,7 +2,6 @@ from stop_and_wait import StopAndWaitProtocol
 from gbn import GBNProtocol
 from config import STOP_AND_WAIT
 
-
 class ProtocolFactory:
     @staticmethod
     def create_protocol(protocol_type, ip, port, logger):

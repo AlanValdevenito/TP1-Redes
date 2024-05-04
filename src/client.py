@@ -1,15 +1,15 @@
 from logger import Logger
 from upload_handler import *
-from config import UPLOAD, DOWNLOAD
-
+from config import UPLOAD, DOWNLOAD, IP
 
 class Client:
     def __init__(self, ip, port, args):
         self.ip = ip
         self.port = port
         self.logger = Logger(args.verbose)
-        self.protocol = ProtocolFactory.create_protocol(args.protocol, "127.0.0.1", RANDOM_PORT, self.logger)
-        self.logger.log(f"Client: Se eligio {self.protocol} como protocolo.\n")
+        self.protocol = ProtocolFactory.create_protocol(args.protocol, IP, RANDOM_PORT, self.logger)
+        
+        self.logger.log(f"Client: Choose {self.protocol} as protocol.\n")
 
     def upload(self, file_src, file_name, server_address):
         """
@@ -24,28 +24,26 @@ class Client:
         - file_name: Nombre del archivo que se creara y donde se guardara el archivo subido.
         - server_address: Dirección del servidor. Es una tupla (IP, PORT).
         """
-
         sequence_number = 0
         request = Message(MessageType.INSTRUCTION, sequence_number, UPLOAD, file_name)
-
-        self.protocol.send(request, server_address)  # Mando un request para hacer upload
+        self.protocol.send(request, server_address)
         self.protocol.socket.settimeout(0.1)
 
         received_port = False
         while not received_port:
             try:
-                msg, address = self.protocol.recv()  # Recibo el nuevo port
+                msg, address = self.protocol.recv()
 
                 if msg.message_type == MessageType.PORT:
                     new_port = int(msg.data)
                     received_port = True
-                    server_address = ("127.0.0.1", int(new_port))
+                    server_address = (IP, int(new_port))
 
             except TimeoutError:
                 self.protocol.send(request, server_address)
                 continue
 
-        sequence_number = 0  # ¿Por qué antes estaba inicializado en -1?. Se cambió para que funcione GBN.
+        sequence_number = 0
         with open(file_src, 'rb') as f:
             data = f.read()
             total = len(data)
@@ -63,7 +61,7 @@ class Client:
         end_message = Message(MessageType.END, sequence_number, "")
         self.protocol.send_data(end_message, server_address)
         self.protocol.wait_end(sequence_number, server_address)
-        self.logger.log("Cliente termino")
+        self.logger.log("Client finished")
 
     def download(self, file_dst, file_name, server_address):
         """
@@ -78,11 +76,10 @@ class Client:
         - file_name: Nombre del archivo que se desea descargar.
         - server_address: Dirección del servidor. Es una tupla (IP, PORT).
         """
-
         sequence_number = 0
         request = Message(MessageType.INSTRUCTION, sequence_number, DOWNLOAD, file_name)
 
-        self.protocol.send(request, server_address)  # Mando un request de download al server
+        self.protocol.send(request, server_address)
         self.protocol.socket.settimeout(0.1)
 
         previous_seq_number = -1
@@ -91,26 +88,19 @@ class Client:
                 try:
                     msg, address = self.protocol.recv_data()
 
-                    # Si llega un mensaje de tipo END y tiene el número de secuencia esperado (está en orden)...
                     if msg.message_type == MessageType.END and msg.sequence_number == previous_seq_number + 1:
                         self.protocol.send_end(msg.sequence_number, address)
                         break
 
-                    # Si el mensaje tiene el número de secuencia esperado (está en orden)...
                     if msg.sequence_number == previous_seq_number + 1:
                         f.write(msg.data)
-                        self.logger.log(colored(f"Writing data\n", "green"))
-
                         previous_seq_number = msg.sequence_number
-
-                    # Si el mensaje está repetido o desordenado...
-                    else:
-                        # self.logger.log(f"Descartamos paquete con numero de secuencia {msg.sequence_number}\n")
-                        continue
+                        
+                        self.logger.log(colored(f"Writing data\n", "green"))
 
                 except TimeoutError:
                     self.protocol.send(request, server_address)
                     continue
 
         self.protocol.close()
-        self.logger.log("Cliente termino")
+        self.logger.log("Client finished")

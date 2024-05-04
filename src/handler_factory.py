@@ -2,7 +2,6 @@ from upload_handler import UploadHandler
 from download_handler import DownloadHandler
 from config import UPLOAD, DOWNLOAD
 
-
 class HandleFactory:
     @staticmethod
     def create_handle(handle_type, client_address, filename, protocol, logger):

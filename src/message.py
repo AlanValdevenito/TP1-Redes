@@ -1,15 +1,13 @@
 from enum import Enum
 
-
 class MessageType(Enum):
     INSTRUCTION = 1
     DATA = 2
     FILE_NAME = 3
     ACK = 4
-    PORT = 5  # para mandarle el puerto al cliente
-    END = 6  # para avisar que termine de mandar el archivo
+    PORT = 5
+    END = 6
     ACK_END = 7
-
 
 class Message:
     def __init__(self, message_type, sequence_number, data, file_name=""):

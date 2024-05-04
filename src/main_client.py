@@ -1,8 +1,7 @@
+import argparse
 from client import Client
 from utils import check_client_args
 from config import UPLOAD, DOWNLOAD, IP, SERVER_PORT, PORT
-import argparse
-
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Command line utility for uploading and downloading files')
@@ -17,7 +16,6 @@ def parse_args():
     parser.add_argument('-P', '--protocol', metavar='PROTOCOL', help='protocol number')
     return parser.parse_args()
 
-
 def main():
     args = parse_args()
     if not check_client_args(args):
@@ -31,6 +29,5 @@ def main():
 
     if args.command == DOWNLOAD:
         client.download(args.dst, args.name, server_address)
-
 
 main()
