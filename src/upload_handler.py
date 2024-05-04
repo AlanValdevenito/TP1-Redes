@@ -52,7 +52,8 @@ class UploadHandler:
 
                     # Si el mensaje esta repetido o desordenado...
                     else:
-                        print(f"Descartamos paquete con numero de secuencia {msg.sequence_number}\n")
+                        # print(colored(f"Descartamos paquete con numero de secuencia {msg.sequence_number}\n", "red"))
+                        pass
 
                 except TimeoutError:
                     self.protocol.socket.settimeout(10)

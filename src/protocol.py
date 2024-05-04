@@ -1,7 +1,7 @@
 from socket import *
 from message import Message
 
-MAX_LENGTH = 1024
+MAX_LENGTH = 4096
 
 
 class Protocol:
@@ -12,7 +12,7 @@ class Protocol:
 
     def listen(self):
         self.socket.bind((self.ip, self.port))
-        print(f"Socket bindeado en {self.socket.getsockname()}")
+        print(f"Socket bindeado en {self.socket.getsockname()}\n")
 
     def get_port(self):
         return self.socket.getsockname()[1]

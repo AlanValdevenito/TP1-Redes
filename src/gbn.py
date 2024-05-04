@@ -149,7 +149,7 @@ class GBNProtocol(Protocol):
                 except TimeoutError:
                     self.retransmitir_paquetes(address)
             
-            # si el mensaje que queria enviar no es END, ya toy
+            # si el mensaje que queria enviar no es END, salgo
             if message.message_type != MessageType.END:
                 return
         # Puede pasar que la diferencia no sea mayor a 0.0001 y al final no se envíen todos los paquetes, incluyendo el

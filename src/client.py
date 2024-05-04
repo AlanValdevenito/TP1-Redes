@@ -85,14 +85,14 @@ class Client:
         request = Message(MessageType.INSTRUCTION, sequence_number, DOWNLOAD, file_name)
 
         self.protocol.send(request, server_address)  # Mando un request de download al server
-        self.protocol.socket.settimeout(1)
+        self.protocol.socket.settimeout(0.1)
 
         previous_seq_number = -1
         with open(file_dst, 'wb') as f:
             while True:
                 try:
                     msg, address = self.protocol.recv_data()
-
+                    
                     # Si llega un mensaje de tipo END y tiene el número de secuencia esperado (está en orden)...
                     if msg.message_type == MessageType.END and msg.sequence_number == previous_seq_number + 1:
                         break
@@ -106,7 +106,7 @@ class Client:
 
                     # Si el mensaje está repetido o desordenado...
                     else:
-                        print(f"Descartamos paquete con numero de secuencia {msg.sequence_number}\n")
+                        # print(f"Descartamos paquete con numero de secuencia {msg.sequence_number}\n")
                         continue
 
                 except TimeoutError:
