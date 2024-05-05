@@ -2,14 +2,15 @@ from logger import Logger
 from upload_handler import *
 from config import UPLOAD, DOWNLOAD, IP
 
+
 class Client:
     def __init__(self, ip, port, args):
         self.ip = ip
         self.port = port
         self.logger = Logger(args.verbose)
         self.protocol = ProtocolFactory.create_protocol(args.protocol, IP, RANDOM_PORT, self.logger)
-        
-        self.logger.log(f"Client: Choose {self.protocol} as protocol.\n")
+
+        self.logger.log(f"Client: {self.protocol} was chosen as protocol.\n")
 
     def upload(self, file_src, file_name, server_address):
         """
@@ -37,7 +38,7 @@ class Client:
                 if msg.message_type == MessageType.PORT:
                     new_port = int(msg.data)
                     received_port = True
-                    server_address = (IP, int(new_port))
+                    server_address = (self.ip, int(new_port))
 
             except TimeoutError:
                 self.protocol.send(request, server_address)
@@ -53,10 +54,9 @@ class Client:
                 current_data = data[sent_bytes:sent_bytes + MAX_LENGTH]
                 message = Message(MessageType.DATA, sequence_number, current_data)
 
-                self.protocol.send_data(message, server_address)
-
+                sent_bytes += self.protocol.send_data(message, server_address)
                 sequence_number += 1
-                sent_bytes += MAX_LENGTH
+                self.logger.log(f"Sent {sent_bytes} bytes of {total} bytes", quiet=True)
 
         end_message = Message(MessageType.END, sequence_number, "")
         self.protocol.send_data(end_message, server_address)
@@ -95,7 +95,7 @@ class Client:
                     if msg.sequence_number == previous_seq_number + 1:
                         f.write(msg.data)
                         previous_seq_number = msg.sequence_number
-                        
+
                         self.logger.log(colored(f"Writing data\n", "green"))
 
                 except TimeoutError:

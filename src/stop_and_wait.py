@@ -1,7 +1,6 @@
 from message import *
 from protocol import Protocol
 from config import MAX_LENGTH
-
 from termcolor import colored
 
 class StopAndWaitProtocol(Protocol):
@@ -32,6 +31,7 @@ class StopAndWaitProtocol(Protocol):
                 continue
 
         self.socket.setblocking(True)
+        return len(encoded_msg)
 
     def recv_ack(self, seq_number):
         """

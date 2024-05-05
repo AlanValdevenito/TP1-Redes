@@ -5,17 +5,17 @@ from gbn import *
 
 
 class DownloadHandler:
-    def __init__(self, client_address, filename, protocol, logger):
+    def __init__(self, ip, client_address, filename, protocol, logger):
         self.client_address = client_address
         self.filename = filename
         self.logger = logger
 
         self.thread = Thread(target=self.handle_download)
         self.ended = False
-        self.protocol = ProtocolFactory.create_protocol(protocol, IP, RANDOM_PORT, logger)
+        self.protocol = ProtocolFactory.create_protocol(protocol, ip, RANDOM_PORT, logger)
         self.protocol.listen()
-        
-        self.logger.log(f"DownloadHandler: Choose {self.protocol} as protocol.\n")
+
+        self.logger.log(f"DownloadHandler: {self.protocol} was chosen as protocol.\n")
 
     def start(self):
         self.thread.start()

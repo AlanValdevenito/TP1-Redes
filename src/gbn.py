@@ -1,16 +1,17 @@
 from message import Message, MessageType
-from protocol import Protocol
+from protocol import Protocol, EndState
 from config import WINDOW_SIZE, MAX_LENGTH
 from termcolor import colored
 import time
+
 
 class GBNProtocol(Protocol):
     def __init__(self, ip, port, logger):
         Protocol.__init__(self, ip, port, logger)
         self.n = WINDOW_SIZE
-        self.base = 0 
-        self.signumsec = 0 
-        self.highest_inorder_seqnum = 0 
+        self.base = 0
+        self.signumsec = 0
+        self.highest_inorder_seqnum = 0
 
         self.socket.settimeout(0.0001)
         self.messages = {}
@@ -24,21 +25,22 @@ class GBNProtocol(Protocol):
             if decoded_msg.sequence_number < self.base:
                 return decoded_msg, address
 
-            self.logger.log(colored(f"Receiving ACK with sequence number {decoded_msg.sequence_number} from {address}.", "yellow"))
+            self.logger.log(
+                colored(f"Receiving ACK with sequence number {decoded_msg.sequence_number} from {address}.", "yellow"))
             self.logger.log(colored("Update base.\n", "yellow"))
-            
+
             self.base = decoded_msg.sequence_number + 1
             return decoded_msg, address
 
         if decoded_msg.sequence_number != self.highest_inorder_seqnum:
-            print(colored(f"Wrong order", "red")) 
-            print(colored(f"Receiving packet with sequence number {decoded_msg.sequence_number} from {address}", "red")) 
+            print(colored(f"Wrong order", "red"))
+            print(colored(f"Receiving packet with sequence number {decoded_msg.sequence_number} from {address}", "red"))
             print(colored(f"Discard packet", "red"))
             self.send_ack(self.highest_inorder_seqnum, address)
             return decoded_msg, address
 
-        print(colored(f"Correct order", "green")) 
-        print(colored(f"Receiving packet with sequence number {decoded_msg.sequence_number} from {address}", "green")) 
+        print(colored(f"Correct order", "green"))
+        print(colored(f"Receiving packet with sequence number {decoded_msg.sequence_number} from {address}", "green"))
         self.highest_inorder_seqnum += 1
         is_end = decoded_msg.message_type == MessageType.END
         self.send_ack(self.highest_inorder_seqnum, address, is_end)
@@ -56,9 +58,10 @@ class GBNProtocol(Protocol):
         ack = Message(MessageType.ACK, seq_number, "")
         if is_end:
             ack = Message(MessageType.ACK_END, seq_number, "")
+            self.end_state = EndState.CLOSE_WAIT
         self.socket.sendto(ack.encode(), address)
         self.logger.log(
-            colored(f"Se envia el ACK a {address} con el numero de secuencia {seq_number} (proximo paquete esperado)\n",
+            colored(f"Sending ACK to {address} with sequence number {seq_number} (next expected package)\n",
                     "yellow"))
 
         """rdm = random.randint(0, 9)
@@ -73,10 +76,22 @@ class GBNProtocol(Protocol):
 
         self.socket.setblocking(False)
         self.recv_ack(self.base)
-
         encoded_msg = message.encode()
+
+        if message.message_type == MessageType.END:
+            self.logger.log(f"Receiving END")
+            while self.signumsec != self.base:
+                self.recv_ack(self.base)
+                if time.time() - self.lastackreceived > 1:
+                    self.retransmitir_paquetes(address)
+            self.logger.log("Finished sending all the packets\n")
+            self.end_state = EndState.END_SENT
+            self.send_end(message.sequence_number, address)
+            return len(encoded_msg)
+
         if self.signumsec <= self.base + self.n - 1:
-            self.logger.log(colored(f"Sending packet with sequence number {message.sequence_number} to {address}\n", "green"))
+            self.logger.log(
+                colored(f"Sending packet with sequence number {message.sequence_number} to {address}\n", "green"))
             self.socket.sendto(encoded_msg, address)
             self.messages[message.sequence_number] = encoded_msg
             self.signumsec += 1
@@ -92,7 +107,9 @@ class GBNProtocol(Protocol):
                     while not window_has_room:
                         window_has_room = self.recv_ack(self.base)
 
-                    self.logger.log(colored(f"Sending packet with sequence number {message.sequence_number} to {address}\n", "green"))
+                    self.logger.log(
+                        colored(f"Sending packet with sequence number {message.sequence_number} to {address}\n",
+                                "green"))
                     self.messages[message.sequence_number] = encoded_msg
                     self.socket.sendto(encoded_msg, address)
                     message_sent = True
@@ -102,20 +119,13 @@ class GBNProtocol(Protocol):
                     self.retransmitir_paquetes(address)
 
             if message.message_type != MessageType.END:
-                return
+                return len(encoded_msg)
 
         self.socket.setblocking(False)
         if time.time() - self.lastackreceived > 0.1:
             self.retransmitir_paquetes(address)
 
-        if message.message_type == MessageType.END:
-            self.logger.log(f"Receiving END")
-            while self.signumsec != self.base:
-                self.recv_ack(self.base)
-                if time.time() - self.lastackreceived > 0.1:
-                    self.retransmitir_paquetes(address)
-
-            self.logger.log("Finished sending all the packets\n")
+        return len(encoded_msg)
 
     def recv_ack(self, base):
         """
@@ -133,7 +143,8 @@ class GBNProtocol(Protocol):
             encoded_msg, _ = self.socket.recvfrom(MAX_LENGTH * 2)
             msg = Message.decode(encoded_msg)
 
-            self.logger.log(colored(f"Receiving ACK with sequence number {msg.sequence_number} (next expected packet).", "yellow"))
+            self.logger.log(
+                colored(f"Receiving ACK with sequence number {msg.sequence_number} (next expected packet).", "yellow"))
 
             if msg.sequence_number < base + 1:
                 self.logger.log(colored(f"Don't update base (repeated ACK).\n", "yellow"))
@@ -156,7 +167,8 @@ class GBNProtocol(Protocol):
 
         print(colored("Timeout", "blue"))
         self.logger.log(colored("-------------------------------------", "blue"))
-        self.logger.log(colored(f"Re-sending packets with sequence number [{self.base}, {self.signumsec - 1}]\n", "blue"))
+        self.logger.log(
+            colored(f"Re-sending packets with sequence number [{self.base}, {self.signumsec - 1}]\n", "blue"))
         for i in range(self.base, self.signumsec):
             if i in self.messages:
                 print(colored(f"Re-sending packet with sequence number {i} to {address}", "blue"))

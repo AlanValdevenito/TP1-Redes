@@ -5,17 +5,17 @@ from gbn import *
 
 
 class UploadHandler:
-    def __init__(self, client_address, filename, protocol, logger):
+    def __init__(self, ip, client_address, filename, protocol, logger):
         self.client_address = client_address
         self.filename = filename
         self.logger = logger
 
         self.thread = Thread(target=self.handle_upload)
         self.ended = False
-        self.protocol = ProtocolFactory.create_protocol(protocol, IP, RANDOM_PORT, logger)
+        self.protocol = ProtocolFactory.create_protocol(protocol, ip, RANDOM_PORT, logger)
         self.protocol.listen()
-        
-        self.logger.log(f"UploadHandler: Choose {self.protocol} as protocol.\n")
+
+        self.logger.log(f"UploadHandler: {self.protocol} was chosen as protocol.\n")
 
     def start(self):
         self.thread.start()
@@ -46,7 +46,7 @@ class UploadHandler:
                     if msg.sequence_number == previous_seq_number + 1:
                         f.write(msg.data)
                         previous_seq_number = msg.sequence_number
-                        
+
                         self.logger.log(colored(f"Writing data\n", "green"))
 
                 except TimeoutError:

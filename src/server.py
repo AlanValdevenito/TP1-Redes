@@ -41,7 +41,8 @@ class Server:
                 if msg.message_type == MessageType.INSTRUCTION:
 
                     if address not in self.port_by_address.keys():
-                        handler = HandleFactory.create_handle(msg.data, address, self.storage_dir + msg.file_name,
+                        handler = HandleFactory.create_handle(self.ip, msg.data, address,
+                                                              self.storage_dir + msg.file_name,
                                                               self.number_protocol, self.logger)
                         self.sessions.append(handler)
                         port = handler.get_port()
