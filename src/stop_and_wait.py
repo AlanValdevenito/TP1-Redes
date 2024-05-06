@@ -1,7 +1,8 @@
-from message import *
+from message import Message, MessageType
 from protocol import Protocol
 from config import MAX_LENGTH
 from termcolor import colored
+
 
 class StopAndWaitProtocol(Protocol):
     def __init__(self, ip, port, logger):
@@ -11,7 +12,7 @@ class StopAndWaitProtocol(Protocol):
         """
         Envia un mensaje a la dirección indicada de forma confiable.
         En caso de no recibir un ACK correcto, volverá a enviar el mensaje.
-        
+
         Parámetros:
         - message: Mensaje a enviar.
         - address: Dirección donde se desea enviar el mensaje.
@@ -21,7 +22,9 @@ class StopAndWaitProtocol(Protocol):
         msg_acked = False
         while not msg_acked:
             try:
-                self.logger.log(colored(f"Sending packet with sequence number {message.sequence_number} to {address}", "green"))
+                self.logger.log(colored(
+                    "Sending packet with sequence number"
+                    f" {message.sequence_number} to {address}", "green"))
                 self.socket.sendto(encoded_msg, address)
 
                 self.socket.settimeout(0.05)
@@ -41,8 +44,10 @@ class StopAndWaitProtocol(Protocol):
         - seq_number: Número de secuencia del último mensaje enviado.
 
         Devuelve:
-        - True: Si coincide el sequence number del ACK con el número de secuencia del último mensaje enviado.
-        - False: Si no coincide el sequence number del ACK con el número de secuencia del último mensaje enviado.
+        - True: Si coincide el sequence number del ACK con
+                el número de secuencia del último mensaje enviado.
+        - False: Si no coincide el sequence number del ACK con
+                el número de secuencia del último mensaje enviado.
         """
         encoded_msg, address = self.socket.recvfrom(MAX_LENGTH)
         msg = Message.decode(encoded_msg)
@@ -50,10 +55,14 @@ class StopAndWaitProtocol(Protocol):
         self.logger.log(colored(f"Receiving ACK from {address}", "yellow"))
 
         if msg.sequence_number != seq_number:
-            self.logger.log(colored(f"Sequence number incorrect. Expected ({seq_number}) != Got ({msg.sequence_number}).\n", "red"))
+            self.logger.log(colored(
+                f"Sequence number incorrect. Expected ({seq_number})"
+                f" != Got ({msg.sequence_number}).\n", "red"))
             return msg.sequence_number == seq_number
 
-        self.logger.log(colored(f"Sequence number correct. Expected ({seq_number}) == Got ({msg.sequence_number}).\n", "yellow"))
+        self.logger.log(colored(
+            f"Sequence number correct. Expected ({seq_number})"
+            f" == Got ({msg.sequence_number}).\n", "yellow"))
         return msg.sequence_number == seq_number
 
     def send_ack(self, seq_number, address):
@@ -65,20 +74,25 @@ class StopAndWaitProtocol(Protocol):
         - address: Dirección a donde se debe enviar el ACK.
         """
         ack = Message(MessageType.ACK, seq_number, "")
-        self.logger.log(colored(f"Sending ACK to {address} with sequence number {seq_number}\n", "yellow"))
+        self.logger.log(colored(
+            f"Sending ACK to {address} with sequence number"
+            f" {seq_number}\n", "yellow"))
         self.socket.sendto(ack.encode(), address)
 
     def recv_data(self):
         """
         Recibe datos del socket y envia el ACK correspondiente.
-        
+
         Devuelve:
-        - Una tupla con una instancia de Message con los datos recibidos y la dirección desde donde fue enviado.
+        - Una tupla con una instancia de Message con los datos
+            recibidos y la dirección desde donde fue enviado.
         """
         encoded_msg, address = self.socket.recvfrom(MAX_LENGTH * 2)
         msg = Message.decode(encoded_msg)
 
-        self.logger.log(colored(f"Receiving packet with sequence number {msg.sequence_number} from {address}", "green"))
+        self.logger.log(colored(
+            "Receiving packet with sequence number"
+            f" {msg.sequence_number} from {address}", "green"))
 
         self.send_ack(msg.sequence_number, address)
         return msg, address
