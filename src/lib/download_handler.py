@@ -29,9 +29,6 @@ class DownloadHandler:
         """
         Maneja el request DOWNLOAD.
 
-        Le envia el puerto del nuevo thread al cliente para que el cliente sepa
-        a donde comunicarse.
-
         Se encarga de particionar el archivo y enviar los paquetes.
         """
         sequence_number = 0

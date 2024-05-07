@@ -15,6 +15,7 @@ class GBNProtocol(Protocol):
 
         self.socket.settimeout(0.0001)
         self.messages = {}
+        self.send_times = {}
         self.lastackreceived = time.time()
 
     def recv_data(self):
@@ -112,6 +113,7 @@ class GBNProtocol(Protocol):
                     "green"))
             self.socket.sendto(encoded_msg, address)
             self.messages[message.sequence_number] = encoded_msg
+            self.send_times[message.sequence_number] = time.time()
             self.signumsec += 1
 
         else:
@@ -174,6 +176,10 @@ class GBNProtocol(Protocol):
             self.logger.log(colored("Update base.\n", "yellow"))
             self.base = msg.sequence_number
             self.lastackreceived = time.time()
+            if msg.sequence_number - 1 in self.send_times:
+                calculated_rtt = (time.time() -
+                                  self.send_times[msg.sequence_number - 1])
+                self.logger.log_rtt(calculated_rtt)
             return True
 
         except BlockingIOError:
