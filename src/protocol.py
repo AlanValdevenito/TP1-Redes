@@ -48,7 +48,7 @@ class Protocol(ABC):
 
     def send_end(self, sequence_number, address):
         end_message = Message(MessageType.END, sequence_number, "")
-        self.logger.log(f"Sending END to {address}\n")
+        self.logger.log(f"Sending END\n")
         self.socket.sendto(end_message.encode(), address)
         self.socket.setblocking(True)
         self.socket.settimeout(1)
@@ -85,7 +85,6 @@ class Protocol(ABC):
         if self.end_state == EndState.TIME_WAIT:
             self.end_state = EndState.CLOSED
             return
-        self.logger.log("Esperamos END")
         self.socket.setblocking(True)
         self.socket.settimeout(3)
         try:

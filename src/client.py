@@ -54,10 +54,12 @@ class Client:
                 current_data = data[sent_bytes:sent_bytes + MAX_LENGTH]
                 message = Message(MessageType.DATA, sequence_number, current_data)
 
-                sent_bytes += self.protocol.send_data(message, server_address)
+                self.protocol.send_data(message, server_address)
+                
                 sequence_number += 1
-                self.logger.log(f"Sent {sent_bytes} bytes of {total} bytes", quiet=True)
+                sent_bytes += MAX_LENGTH
 
+        self.logger.log("Sending END\n")
         end_message = Message(MessageType.END, sequence_number, "")
         self.protocol.send_data(end_message, server_address)
         self.protocol.wait_end(sequence_number, server_address)
