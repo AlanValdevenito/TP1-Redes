@@ -1,5 +1,4 @@
 from config import UPLOAD, DOWNLOAD
-import sys
 
 
 def check_verbose_quiet(args):

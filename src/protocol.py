@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from socket import *
+from socket import socket, AF_INET, SOCK_DGRAM
 from message import Message, MessageType
 from config import MAX_LENGTH
 from enum import Enum
@@ -65,9 +65,12 @@ class Protocol(ABC):
                     else:
                         self.end_state = EndState.LAST_ACK
                     ack_arrived = True
-                if end_ack.message_type == MessageType.END and self.end_state == EndState.END_SENT:
+                if (end_ack.message_type == MessageType.END
+                        and self.end_state == EndState.END_SENT):
                     self.logger.log("END received. No need to wait for ACK.")
-                    self.socket.sendto(Message(MessageType.ACK_END, sequence_number, "").encode(), address)
+                    self.socket.sendto(Message(
+                        MessageType.ACK_END, sequence_number, "").encode(),
+                        address)
                     self.end_state = EndState.TIME_WAIT
                     ack_arrived = True
             except TimeoutError:
@@ -90,11 +93,14 @@ class Protocol(ABC):
         self.socket.settimeout(3)
         try:
             fin, _ = self.recv()
-            self.logger.log(f"Receiving END\n")
+            self.logger.log("Receiving END\n")
             self.logger.log(f"Sending ACK-END to {address}\n")
-            self.socket.sendto(Message(MessageType.ACK_END, sequence_number, "").encode(), address)
+            self.socket.sendto(Message(
+                MessageType.ACK_END, sequence_number, "").encode(), address)
         except TimeoutError:
-            self.logger.log(f"Timed out while waiting for END for address {address}")
+            self.logger.log(
+                "Timed out while waiting"
+                f" for END for address {address}")
             pass
         self.end_state = EndState.CLOSED
 
