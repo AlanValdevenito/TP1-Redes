@@ -14,13 +14,13 @@ Trabajo practico basado en la implementacion de un File Transfer.
 En una primera terminal ejecutar
 
 ```
-$ python3 ./main_server.py -P 1
+$ ./start-server -P 1
 ```
 
 En una segunda terminal ejecutar
 
 ```
-$ python3 ./main_client.py upload -n result.txt -s seq.txt -P 1
+$ ./upload -n result.txt -s seq.txt -P 1
 ```
 
 Nota 1: Se debe generar el archivo seq.txt.
@@ -31,13 +31,13 @@ Nota 2: Si se desea utilizar GBN se debe indicar con el flag '-P 2'.
 En una primera terminal ejecutar
 
 ```
-$ python3 ./main_server.py -P 1
+$ ./start-server -P 1
 ```
 
 En una segunda terminal ejecutar
 
 ```
-$ python3 ./main_client.py download -d result.txt -n seq.txt -P 1
+$ ./download -d result.txt -n seq.txt -P 1
 ```
 
 Nota 1: Se debe generar el archivo seq.txt.
