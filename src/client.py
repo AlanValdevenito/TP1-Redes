@@ -3,6 +3,7 @@ from protocol_factory import ProtocolFactory
 from message import Message, MessageType
 from config import UPLOAD, DOWNLOAD, IP, RANDOM_PORT, MAX_LENGTH
 from termcolor import colored
+import os
 
 
 class Client:
@@ -31,6 +32,11 @@ class Client:
                     se guardara el archivo subido.
         - server_address: Dirección del servidor. Es una tupla (IP, PORT).
         """
+
+        if not os.path.isfile(file_src):
+            self.logger.log(colored(f"Error: {file_src} does not exist", "red"), True)
+            return
+
         sequence_number = 0
         request = Message(
             MessageType.INSTRUCTION, sequence_number, UPLOAD, file_name)
@@ -104,6 +110,10 @@ class Client:
                             msg.sequence_number == previous_seq_number + 1):
                         self.protocol.send_end(msg.sequence_number, address)
                         break
+                    
+                    if msg.message_type == MessageType.ERROR:
+                        self.logger.log(colored(f"Error: {msg.data}", "red"), True)
+                        continue
 
                     if msg.sequence_number == previous_seq_number + 1:
                         f.write(msg.data)

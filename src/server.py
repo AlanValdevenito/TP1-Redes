@@ -69,4 +69,7 @@ class Server:
             except TimeoutError:
                 continue
 
+            except KeyboardInterrupt:
+                break
+
         self.protocol.close()

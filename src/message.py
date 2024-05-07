@@ -4,7 +4,7 @@ from enum import Enum
 class MessageType(Enum):
     INSTRUCTION = 1
     DATA = 2
-    FILE_NAME = 3
+    ERROR = 3
     ACK = 4
     PORT = 5
     END = 6

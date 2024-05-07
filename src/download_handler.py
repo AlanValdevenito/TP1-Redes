@@ -34,24 +34,29 @@ class DownloadHandler:
 
         Se encarga de particionar el archivo y enviar los paquetes.
         """
+        sequence_number = 0
+        try:
+            
+            with open(self.filename, 'rb') as f:
+                # Falta comprobar que existe el archivo 'filename'
+                data = f.read()
+                total = len(data)
 
-        with open(self.filename, 'rb') as f:
-            # Falta comprobar que existe el archivo 'filename'
-            data = f.read()
-            total = len(data)
+                sent_bytes = 0
+                
+                while sent_bytes < total:
+                    current_data = data[sent_bytes:sent_bytes + MAX_LENGTH]
+                    message = Message(
+                        MessageType.DATA, sequence_number, current_data)
 
-            sent_bytes = 0
-            sequence_number = 0
-            while sent_bytes < total:
-                current_data = data[sent_bytes:sent_bytes + MAX_LENGTH]
-                message = Message(
-                    MessageType.DATA, sequence_number, current_data)
+                    self.protocol.send_data(message, self.client_address)
 
-                self.protocol.send_data(message, self.client_address)
-
-                sequence_number += 1
-                sent_bytes += MAX_LENGTH
-
+                    sequence_number += 1
+                    sent_bytes += MAX_LENGTH
+        except FileNotFoundError:
+            error_message = Message(MessageType.ERROR, sequence_number, f"No existe el archivo {self.filename}")
+            self.protocol.send_data(error_message, self.client_address)
+        
         end_message = Message(MessageType.END, sequence_number, "")
         self.protocol.send_data(end_message, self.client_address)
         self.protocol.wait_end(sequence_number, self.client_address)
