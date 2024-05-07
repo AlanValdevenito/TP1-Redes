@@ -36,14 +36,13 @@ class DownloadHandler:
         """
         sequence_number = 0
         try:
-            
             with open(self.filename, 'rb') as f:
                 # Falta comprobar que existe el archivo 'filename'
                 data = f.read()
                 total = len(data)
 
                 sent_bytes = 0
-                
+
                 while sent_bytes < total:
                     current_data = data[sent_bytes:sent_bytes + MAX_LENGTH]
                     message = Message(
@@ -54,9 +53,10 @@ class DownloadHandler:
                     sequence_number += 1
                     sent_bytes += MAX_LENGTH
         except FileNotFoundError:
-            error_message = Message(MessageType.ERROR, sequence_number, f"No existe el archivo {self.filename}")
+            error_message = Message(MessageType.ERROR, sequence_number,
+                                    f"No existe el archivo {self.filename}")
             self.protocol.send_data(error_message, self.client_address)
-        
+
         end_message = Message(MessageType.END, sequence_number, "")
         self.protocol.send_data(end_message, self.client_address)
         self.protocol.wait_end(sequence_number, self.client_address)

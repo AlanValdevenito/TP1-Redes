@@ -34,7 +34,8 @@ class Client:
         """
 
         if not os.path.isfile(file_src):
-            self.logger.log(colored(f"Error: {file_src} does not exist", "red"), True)
+            self.logger.log(
+                colored(f"Error: {file_src} does not exist", "red"), True)
             return
 
         sequence_number = 0
@@ -65,7 +66,8 @@ class Client:
             sent_bytes = 0
             while sent_bytes < total:
                 current_data = data[sent_bytes:sent_bytes + MAX_LENGTH]
-                message = Message(MessageType.DATA, sequence_number, current_data)
+                message = Message(MessageType.DATA,
+                                  sequence_number, current_data)
 
                 self.protocol.send_data(message, server_address)
 
@@ -110,9 +112,10 @@ class Client:
                             msg.sequence_number == previous_seq_number + 1):
                         self.protocol.send_end(msg.sequence_number, address)
                         break
-                    
+
                     if msg.message_type == MessageType.ERROR:
-                        self.logger.log(colored(f"Error: {msg.data}", "red"), True)
+                        self.logger.log(colored(f"Error: {msg.data}", "red"),
+                                        True)
                         continue
 
                     if msg.sequence_number == previous_seq_number + 1:

@@ -48,7 +48,7 @@ class Protocol(ABC):
 
     def send_end(self, sequence_number, address):
         end_message = Message(MessageType.END, sequence_number, "")
-        self.logger.log(f"Sending END\n")
+        self.logger.log("Sending END\n")
         self.socket.sendto(end_message.encode(), address)
         self.socket.setblocking(True)
         self.socket.settimeout(1)

@@ -3,6 +3,7 @@ from lib.server import Server
 from lib.config import IP, SERVER_PORT, DEFAULT_PATH
 from lib.utils import check_server_args
 
+
 def parse_args():
     parser = argparse.ArgumentParser(description='<command description>')
     parser.add_argument(

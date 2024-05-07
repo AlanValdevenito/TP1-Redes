@@ -3,6 +3,7 @@ from lib.client import Client
 from lib.utils import check_client_args
 from lib.config import UPLOAD, DOWNLOAD, IP, SERVER_PORT, PORT
 
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description='Command line utility for uploading and downloading files')
