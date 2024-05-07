@@ -1,10 +1,9 @@
 import os
-from message import MessageType, Message
-from logger import Logger
-from stop_and_wait import StopAndWaitProtocol
-from handler_factory import HandleFactory
-from config import UPLOAD
-
+from .message import MessageType, Message
+from .logger import Logger
+from .stop_and_wait import StopAndWaitProtocol
+from .handler_factory import HandleFactory
+from .config import UPLOAD
 
 class Server:
     def __init__(self, ip, port, args):

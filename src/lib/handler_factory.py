@@ -1,6 +1,6 @@
-from upload_handler import UploadHandler
-from download_handler import DownloadHandler
-from config import UPLOAD, DOWNLOAD
+from .upload_handler import UploadHandler
+from .download_handler import DownloadHandler
+from .config import UPLOAD, DOWNLOAD
 
 
 class HandleFactory:

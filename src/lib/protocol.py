@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from socket import socket, AF_INET, SOCK_DGRAM
-from message import Message, MessageType
-from config import MAX_LENGTH
+from .message import Message, MessageType
+from .config import MAX_LENGTH
 from enum import Enum
 
 

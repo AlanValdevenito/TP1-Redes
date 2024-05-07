@@ -1,7 +1,7 @@
-from protocol_factory import ProtocolFactory
+from .protocol_factory import ProtocolFactory
 from threading import Thread
-from message import Message, MessageType
-from config import RANDOM_PORT, MAX_LENGTH
+from .message import Message, MessageType
+from .config import RANDOM_PORT, MAX_LENGTH
 
 
 class DownloadHandler:

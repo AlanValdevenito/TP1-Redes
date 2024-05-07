@@ -1,7 +1,7 @@
-from logger import Logger
-from protocol_factory import ProtocolFactory
-from message import Message, MessageType
-from config import UPLOAD, DOWNLOAD, IP, RANDOM_PORT, MAX_LENGTH
+from .logger import Logger
+from .protocol_factory import ProtocolFactory
+from .message import Message, MessageType
+from .config import UPLOAD, DOWNLOAD, IP, RANDOM_PORT, MAX_LENGTH
 from termcolor import colored
 import os
 

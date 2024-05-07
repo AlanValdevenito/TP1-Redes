@@ -1,6 +1,6 @@
-from stop_and_wait import StopAndWaitProtocol
-from gbn import GBNProtocol
-from config import STOP_AND_WAIT
+from .stop_and_wait import StopAndWaitProtocol
+from .gbn import GBNProtocol
+from .config import STOP_AND_WAIT
 
 
 class ProtocolFactory:

@@ -1,6 +1,6 @@
-from message import Message, MessageType
-from protocol import Protocol, EndState
-from config import WINDOW_SIZE, MAX_LENGTH
+from .message import Message, MessageType
+from .protocol import Protocol, EndState
+from .config import WINDOW_SIZE, MAX_LENGTH
 from termcolor import colored
 import time
 

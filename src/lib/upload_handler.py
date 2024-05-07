@@ -1,7 +1,7 @@
-from protocol_factory import ProtocolFactory
+from .protocol_factory import ProtocolFactory
 from threading import Thread
-from config import RANDOM_PORT
-from message import MessageType
+from .config import RANDOM_PORT
+from .message import MessageType
 from termcolor import colored
 
 

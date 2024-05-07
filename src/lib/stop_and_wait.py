@@ -1,6 +1,6 @@
-from message import Message, MessageType
-from protocol import Protocol
-from config import MAX_LENGTH
+from .message import Message, MessageType
+from .protocol import Protocol
+from .config import MAX_LENGTH
 from termcolor import colored
 
 

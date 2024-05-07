@@ -1,8 +1,7 @@
 import argparse
-from client import Client
-from utils import check_client_args
-from config import UPLOAD, DOWNLOAD, IP, SERVER_PORT, PORT
-
+from lib.client import Client
+from lib.utils import check_client_args
+from lib.config import UPLOAD, DOWNLOAD, IP, SERVER_PORT, PORT
 
 def parse_args():
     parser = argparse.ArgumentParser(

@@ -1,6 +1,5 @@
 from enum import Enum
 
-
 class MessageType(Enum):
     INSTRUCTION = 1
     DATA = 2

@@ -1,4 +1,4 @@
-from config import UPLOAD, DOWNLOAD
+from .config import UPLOAD, DOWNLOAD
 
 
 def check_verbose_quiet(args):
