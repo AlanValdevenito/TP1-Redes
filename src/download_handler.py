@@ -1,7 +1,7 @@
 from protocol_factory import ProtocolFactory
 from threading import Thread
-from config import IP, RANDOM_PORT
-from gbn import *
+from message import Message, MessageType
+from config import RANDOM_PORT, MAX_LENGTH
 
 
 class DownloadHandler:
@@ -12,10 +12,12 @@ class DownloadHandler:
 
         self.thread = Thread(target=self.handle_download)
         self.ended = False
-        self.protocol = ProtocolFactory.create_protocol(protocol, ip, RANDOM_PORT, logger)
+        self.protocol = ProtocolFactory.create_protocol(
+            protocol, ip, RANDOM_PORT, logger)
         self.protocol.listen()
 
-        self.logger.log(f"DownloadHandler: {self.protocol} was chosen as protocol.\n")
+        self.logger.log(
+            f"DownloadHandler: {self.protocol} was chosen as protocol.\n")
 
     def start(self):
         self.thread.start()
@@ -33,7 +35,8 @@ class DownloadHandler:
         Se encarga de particionar el archivo y enviar los paquetes.
         """
 
-        with open(self.filename, 'rb') as f: # Falta comprobar que existe el archivo 'filename'
+        with open(self.filename, 'rb') as f:
+            # Falta comprobar que existe el archivo 'filename'
             data = f.read()
             total = len(data)
 
@@ -41,7 +44,8 @@ class DownloadHandler:
             sequence_number = 0
             while sent_bytes < total:
                 current_data = data[sent_bytes:sent_bytes + MAX_LENGTH]
-                message = Message(MessageType.DATA, sequence_number, current_data)
+                message = Message(
+                    MessageType.DATA, sequence_number, current_data)
 
                 self.protocol.send_data(message, self.client_address)
 
