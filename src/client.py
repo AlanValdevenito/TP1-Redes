@@ -61,7 +61,7 @@ class Client:
                 current_data = data[sent_bytes:sent_bytes + MAX_LENGTH]
                 message = Message(MessageType.DATA, sequence_number, current_data)
 
-                self.protocol.send_data(message, self.client_address)
+                self.protocol.send_data(message, server_address)
 
                 sequence_number += 1
                 sent_bytes += MAX_LENGTH
