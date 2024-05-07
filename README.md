@@ -20,7 +20,7 @@ $ ./start-server -P 1
 En una segunda terminal ejecutar
 
 ```
-$ ./upload -n result.txt -s seq.txt -P 1
+$ python3 upload -n result.txt -s seq.txt -P 1
 ```
 
 Nota 1: Se debe generar el archivo seq.txt.
@@ -31,13 +31,13 @@ Nota 2: Si se desea utilizar GBN se debe indicar con el flag '-P 2'.
 En una primera terminal ejecutar
 
 ```
-$ ./start-server -P 1
+$ python3 start-server -P 1
 ```
 
 En una segunda terminal ejecutar
 
 ```
-$ ./download -d result.txt -n seq.txt -P 1
+$ python3 download -d result.txt -n seq.txt -P 1
 ```
 
 Nota 1: Se debe generar el archivo seq.txt.
