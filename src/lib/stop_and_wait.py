@@ -1,3 +1,5 @@
+import time
+
 from .message import Message, MessageType
 from .protocol import Protocol
 from .config import MAX_LENGTH
@@ -22,13 +24,18 @@ class StopAndWaitProtocol(Protocol):
         msg_acked = False
         while not msg_acked:
             try:
-                self.logger.log(colored(
-                    "Sending packet with sequence number"
-                    f" {message.sequence_number} to {address}", "green"))
-                self.socket.sendto(encoded_msg, address)
+                start_time = time.time()
+                self.logger.log(
+                    colored(
+                        "Sending packet with sequence number"
+                        f" {message.sequence_number} to {address}", "green"))
+                self.send(message, address)
 
                 self.socket.settimeout(0.05)
                 msg_acked = self.recv_ack(message.sequence_number)
+                end_time = time.time()
+                rtt = end_time - start_time
+                self.logger.log_rtt(rtt)
 
             except TimeoutError:
                 continue
@@ -77,7 +84,7 @@ class StopAndWaitProtocol(Protocol):
         self.logger.log(colored(
             f"Sending ACK to {address} with sequence number"
             f" {seq_number}\n", "yellow"))
-        self.socket.sendto(ack.encode(), address)
+        self.send(ack, address)
 
     def recv_data(self):
         """

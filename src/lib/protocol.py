@@ -48,15 +48,15 @@ class Protocol(ABC):
 
     def send_end(self, sequence_number, address):
         end_message = Message(MessageType.END, sequence_number, "")
-        self.logger.log("Sending END\n")
-        self.socket.sendto(end_message.encode(), address)
+        self.logger.log(f"Sending END to {address}\n")
+        self.send(end_message, address)
         self.socket.setblocking(True)
         self.socket.settimeout(1)
         ack_arrived = False
         count = 0
         while not ack_arrived and count < 10:
             try:
-                self.socket.sendto(end_message.encode(), address)
+                self.send(end_message, address)
                 end_ack, _ = self.recv()
                 if end_ack.message_type == MessageType.ACK_END:
                     self.logger.log("Receiving ACK-END\n")
@@ -68,8 +68,8 @@ class Protocol(ABC):
                 if (end_ack.message_type == MessageType.END
                         and self.end_state == EndState.END_SENT):
                     self.logger.log("END received. No need to wait for ACK.")
-                    self.socket.sendto(Message(
-                        MessageType.ACK_END, sequence_number, "").encode(),
+                    self.send(Message(
+                        MessageType.ACK_END, sequence_number, ""),
                         address)
                     self.end_state = EndState.TIME_WAIT
                     ack_arrived = True
@@ -77,9 +77,7 @@ class Protocol(ABC):
                 self.logger.log(f"Re-sending END to {address}\n")
                 if self.end_state == EndState.CLOSE_WAIT:
                     ack = Message(MessageType.ACK_END, sequence_number, "")
-                    self.socket.sendto(ack.encode(), address)
-                else:
-                    self.socket.sendto(end_message.encode(), address)
+                    self.send(ack, address)
                 count += 1
                 continue
 
@@ -94,8 +92,8 @@ class Protocol(ABC):
             fin, _ = self.recv()
             self.logger.log("Receiving END\n")
             self.logger.log(f"Sending ACK-END to {address}\n")
-            self.socket.sendto(Message(
-                MessageType.ACK_END, sequence_number, "").encode(), address)
+            self.send(Message(
+                MessageType.ACK_END, sequence_number, ""), address)
         except TimeoutError:
             self.logger.log(
                 "Timed out while waiting"

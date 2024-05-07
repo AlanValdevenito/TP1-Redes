@@ -67,7 +67,7 @@ class GBNProtocol(Protocol):
         if is_end:
             ack = Message(MessageType.ACK_END, seq_number, "")
             self.end_state = EndState.CLOSE_WAIT
-        self.socket.sendto(ack.encode(), address)
+        self.send(ack, address)
         self.logger.log(colored(
             f"Sending ACK to {address} with sequence number"
             f" {seq_number} (next expected package)\n",
