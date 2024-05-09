@@ -43,5 +43,5 @@ def main():
     if args.command == DOWNLOAD:
         client.download(args.dst, args.name, server_address)
 
-
-main()
+if __name__ == "__main__":
+    main()

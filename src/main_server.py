@@ -3,7 +3,6 @@ from lib.server import Server
 from lib.config import IP, SERVER_PORT, DEFAULT_PATH
 from lib.utils import check_server_args
 
-
 def parse_args():
     parser = argparse.ArgumentParser(description='<command description>')
     parser.add_argument(
@@ -35,5 +34,5 @@ def main():
     server = Server(args.host, args.port, args)
     server.start()
 
-
-main()
+if __name__ == "__main__":
+    main()
