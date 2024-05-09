@@ -1,6 +1,6 @@
 from lib.client import Client
 from lib.config import IP, SERVER_PORT, PORT, STOP_AND_WAIT, UPLOAD, DOWNLOAD
-from main_server import parse_args
+from lib.utils import parse_server_args
 import subprocess, time, os
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,7 +12,7 @@ N_CLIENTS=3
 files = ['file.txt', 'file2.txt', 'file4.txt', 'file8.txt', 'file16.txt']
 
 def test(operation, protocol):
-    args = parse_args()
+    args = parse_server_args()
     args.protocol = protocol
 
     proc = subprocess.Popen(['python3', 'main_server.py', '-P', protocol])    
