@@ -139,7 +139,8 @@ class Client:
                     count += 1
                     if count >= 10 and not connection_set_up:
                         self.logger.log(
-                            colored("Error: Could not connect to server", "red"), True)
+                            colored("Error: Could not connect to server",
+                                    "red"), True)
                         break
                     continue
 
