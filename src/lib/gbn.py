@@ -74,18 +74,6 @@ class GBNProtocol(Protocol):
             f" {seq_number} (next expected package)\n",
             "yellow"))
 
-        """rdm = random.randint(0, 9)
-        if rdm < 2:
-            self.socket.sendto(ack.encode(), address)
-            self.logger.log(colored(
-                f"Se envia el ACK a {address} "
-                f"con el numero de secuencia {seq_number}\n",
-                "yellow"))
-        else:
-            self.logger.log(colored(
-                "Se perdio el ACK con el numero de secuencia"
-                f" {seq_number}\n", "red"))"""
-
     def send_data(self, message, address):
         self.logger.log(
             f"n: {self.n}, base: {self.base}, signumsec: {self.signumsec}")
@@ -95,7 +83,6 @@ class GBNProtocol(Protocol):
         encoded_msg = message.encode()
 
         if message.message_type == MessageType.END:
-            self.logger.log("Receiving END")
             while self.signumsec != self.base:
                 self.recv_ack(self.base)
                 if time.time() - self.lastackreceived > 1:
@@ -179,7 +166,7 @@ class GBNProtocol(Protocol):
             if msg.sequence_number - 1 in self.send_times:
                 calculated_rtt = (time.time() -
                                   self.send_times[msg.sequence_number - 1])
-                self.logger.log_rtt(calculated_rtt)
+                # self.logger.log_rtt(calculated_rtt)
             return True
 
         except BlockingIOError:
