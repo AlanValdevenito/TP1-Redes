@@ -1,5 +1,5 @@
-from src.lib.server import Server
-from src.lib.utils import check_server_args, parse_server_args
+from lib.server import Server
+from lib.utils import check_server_args, parse_server_args
 
 
 def main():

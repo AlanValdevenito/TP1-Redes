@@ -1,6 +1,6 @@
-from src.lib.client import Client
-from src.lib.config import IP, SERVER_PORT, PORT, STOP_AND_WAIT, UPLOAD, DOWNLOAD
-from src.lib.utils import parse_server_args
+from lib.client import Client
+from lib.config import IP, SERVER_PORT, PORT, STOP_AND_WAIT, UPLOAD, DOWNLOAD
+from lib.utils import parse_server_args
 import subprocess
 import time
 import os
@@ -26,7 +26,7 @@ def test(operation, protocol):
         size[f] = os.path.getsize(f)
 
     for f in files:
-        
+
         client = Client(IP, PORT, args)
         print(f"\nUpload & download tests:\n")
         start = time.time()
@@ -54,7 +54,8 @@ def generate_files():
             for _ in range(size):
                 f.write(one_mb_of_data)
         size = size * 2
-    
+
+
 def delete_files():
     size = 1
     for _ in range(NUMBER_OF_FILES):
@@ -64,13 +65,12 @@ def delete_files():
         delete_file(f"server_storage/{filename}")
         delete_file(f"server_storage/{filename}_upload")
         size = size * 2
-    
+
 
 def delete_file(filename):
     absolute_path = os.path.join(os.getcwd(), filename)
     if os.path.exists(absolute_path):
         os.remove(absolute_path)
-
 
 
 def main():
