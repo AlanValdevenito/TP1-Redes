@@ -15,6 +15,7 @@ class GBNProtocol(Protocol):
 
         self.socket.settimeout(0.0001)
         self.messages = {}
+        self.send_times = {}
         self.lastackreceived = time.time()
 
     def recv_data(self):
@@ -67,23 +68,11 @@ class GBNProtocol(Protocol):
         if is_end:
             ack = Message(MessageType.ACK_END, seq_number, "")
             self.end_state = EndState.CLOSE_WAIT
-        self.socket.sendto(ack.encode(), address)
+        self.send(ack, address)
         self.logger.log(colored(
             f"Sending ACK to {address} with sequence number"
             f" {seq_number} (next expected package)\n",
             "yellow"))
-
-        """rdm = random.randint(0, 9)
-        if rdm < 2:
-            self.socket.sendto(ack.encode(), address)
-            self.logger.log(colored(
-                f"Se envia el ACK a {address} "
-                f"con el numero de secuencia {seq_number}\n",
-                "yellow"))
-        else:
-            self.logger.log(colored(
-                "Se perdio el ACK con el numero de secuencia"
-                f" {seq_number}\n", "red"))"""
 
     def send_data(self, message, address):
         self.logger.log(
@@ -94,7 +83,6 @@ class GBNProtocol(Protocol):
         encoded_msg = message.encode()
 
         if message.message_type == MessageType.END:
-            self.logger.log("Receiving END")
             while self.signumsec != self.base:
                 self.recv_ack(self.base)
                 if time.time() - self.lastackreceived > 1:
@@ -112,6 +100,7 @@ class GBNProtocol(Protocol):
                     "green"))
             self.socket.sendto(encoded_msg, address)
             self.messages[message.sequence_number] = encoded_msg
+            self.send_times[message.sequence_number] = time.time()
             self.signumsec += 1
 
         else:
@@ -174,6 +163,11 @@ class GBNProtocol(Protocol):
             self.logger.log(colored("Update base.\n", "yellow"))
             self.base = msg.sequence_number
             self.lastackreceived = time.time()
+
+            if msg.sequence_number - 1 in self.send_times:
+                calculated_rtt = (time.time() -
+                                  self.send_times[msg.sequence_number - 1])
+                self.logger.log_rtt(calculated_rtt)
             return True
 
         except BlockingIOError:

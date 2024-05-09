@@ -45,7 +45,8 @@ class Client:
         self.protocol.socket.settimeout(0.1)
 
         received_port = False
-        while not received_port:
+        count = 0
+        while not received_port and count < 10:
             try:
                 msg, address = self.protocol.recv()
 
@@ -56,7 +57,13 @@ class Client:
 
             except TimeoutError:
                 self.protocol.send(request, server_address)
+                count += 1
                 continue
+
+        if not received_port:
+            self.logger.log(
+                colored("Error: Could not receive new port", "red"), True)
+            return
 
         sequence_number = 0
         with open(file_src, 'rb') as f:
@@ -79,6 +86,7 @@ class Client:
         self.protocol.send_data(end_message, server_address)
         self.protocol.wait_end(sequence_number, server_address)
         self.logger.log("Client finished")
+        self.logger.log_final_rtt()
 
     def download(self, file_dst, file_name, server_address):
         """
@@ -95,6 +103,7 @@ class Client:
         - file_name: Nombre del archivo que se desea descargar.
         - server_address: Dirección del servidor. Es una tupla (IP, PORT).
         """
+        count = 0
         sequence_number = 0
         request = Message(
             MessageType.INSTRUCTION, sequence_number, DOWNLOAD, file_name)
@@ -126,6 +135,7 @@ class Client:
 
                 except TimeoutError:
                     self.protocol.send(request, server_address)
+                    count += 1
                     continue
 
         self.protocol.close()
