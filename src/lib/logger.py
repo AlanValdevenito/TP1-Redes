@@ -36,8 +36,9 @@ class Logger:
             plt.pause(0.01)  # Pause for a short time to update the plot
 
     def log_final_rtt(self):
-        print("Showing results")
         if self.verbose:
+            print("Showing results")
+
             self.line.set_xdata(self.x_data)
             self.line.set_ydata(self.y_data)
             self.ax.relim()

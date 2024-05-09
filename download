@@ -1,7 +1,7 @@
 import argparse
 from lib.client import Client
 from lib.utils import check_client_args
-from lib.config import UPLOAD, DOWNLOAD, IP, SERVER_PORT, PORT
+from lib.config import IP, SERVER_PORT, PORT, DOWNLOAD
 
 
 def parse_args():
@@ -18,21 +18,22 @@ def parse_args():
     parser.add_argument(
         '-p', '--port', metavar='PORT', default=SERVER_PORT,
         help='server port')
-    
+
     parser.add_argument(
         '-s', '--src', metavar='FILEPATH', help='source file path')
     parser.add_argument(
         '-d', '--dst', metavar='FILEPATH', help='destination file path')
-        
+
     parser.add_argument('-n', '--name', metavar='FILENAME', help='file name')
     parser.add_argument(
         '-P', '--protocol', metavar='PROTOCOL', help='protocol number')
-    
+
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
+    args.command = DOWNLOAD
     if not check_client_args(args):
         return
 
@@ -40,6 +41,6 @@ def main():
     server_address = (args.host, args.port)
     client.download(args.dst, args.name, server_address)
 
+
 if __name__ == "__main__":
     main()
-    

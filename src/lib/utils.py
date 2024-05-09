@@ -1,6 +1,7 @@
 import argparse
 from .config import UPLOAD, DOWNLOAD, IP, SERVER_PORT, DEFAULT_PATH
 
+
 def check_verbose_quiet(args):
     if args.verbose and args.quiet:
         print('Error: Cannot use both verbose and quiet flags')
@@ -24,8 +25,10 @@ def check_client_args(args):
 def check_server_args(args):
     return check_verbose_quiet(args)
 
+
 def parse_server_args():
-    parser = argparse.ArgumentParser(description='Command line server utility for uploading and downloading files')
+    d = 'Command line server utility for uploading and downloading files'
+    parser = argparse.ArgumentParser(description=d)
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument(

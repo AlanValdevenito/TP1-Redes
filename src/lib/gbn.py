@@ -163,10 +163,11 @@ class GBNProtocol(Protocol):
             self.logger.log(colored("Update base.\n", "yellow"))
             self.base = msg.sequence_number
             self.lastackreceived = time.time()
+
             if msg.sequence_number - 1 in self.send_times:
                 calculated_rtt = (time.time() -
                                   self.send_times[msg.sequence_number - 1])
-                # self.logger.log_rtt(calculated_rtt)
+                self.logger.log_rtt(calculated_rtt)
             return True
 
         except BlockingIOError:

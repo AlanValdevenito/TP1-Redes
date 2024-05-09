@@ -1,21 +1,24 @@
 from lib.client import Client
 from lib.config import IP, SERVER_PORT, PORT, STOP_AND_WAIT, UPLOAD, DOWNLOAD
 from lib.utils import parse_server_args
-import subprocess, time, os
+import subprocess
+import time
+import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-GO_BACK_N='0'
-SERVER_ADDRESS=(IP, SERVER_PORT)
-N_CLIENTS=3
+GO_BACK_N = '0'
+SERVER_ADDRESS = (IP, SERVER_PORT)
+N_CLIENTS = 3
 
 files = ['file.txt', 'file2.txt', 'file4.txt', 'file8.txt', 'file16.txt']
+
 
 def test(operation, protocol):
     args = parse_server_args()
     args.protocol = protocol
 
-    proc = subprocess.Popen(['python3', 'main_server.py', '-P', protocol])    
+    proc = subprocess.Popen(['python3', 'main_server.py', '-P', protocol])
 
     times = []
     size = {}
@@ -30,28 +33,29 @@ def test(operation, protocol):
             if operation == UPLOAD:
                 client.upload(f, f + f"_{operation}_" + str(i), SERVER_ADDRESS)
             elif operation == DOWNLOAD:
-                client.download(f + f"_{operation}_" + str(i), f, SERVER_ADDRESS)
+                client.download(f + f"_{operation}_" + str(i),
+                                f, SERVER_ADDRESS)
             time_elapsed = time.time() - start
             times.append(time_elapsed)
 
     os.system(f"kill {proc.pid}")
     return times
 
+
 def main():
-    
     results = {
-        'upload' : {
+        'upload': {
             'snw': test(UPLOAD, STOP_AND_WAIT),
             'gbn': test(UPLOAD, GO_BACK_N)
         },
-        'download' : {
+        'download': {
             'snw': test(DOWNLOAD, STOP_AND_WAIT),
             'gbn': test(DOWNLOAD, GO_BACK_N)
         }
     }
 
-    sizes = [1,2,4,8,16]
-    
+    sizes = [1, 2, 4, 8, 16]
+
     for operation in results:
         x = np.array(sizes)
         y1 = np.array(results[operation]['snw'])
@@ -60,9 +64,13 @@ def main():
         plt.plot(x, y1, "-b", label="Stop & Wait")
         plt.plot(x, y2, "-r", label="Go Back N")
         plt.legend(loc="upper left")
-        plt.title(label= f'Tiempo de finalización según tamaño del archivo para {operation}')
+        title = f'''Tiempo de finalización según
+                    tamaño del archivo para {operation}'''
+        plt.title(label=title)
         plt.xlabel("Tamaño del archivo (MB)")
         plt.ylabel("Tiempo de finalización (segundos)")
         plt.show()
 
-main()
+
+if __name__ == "__main__":
+    main()
