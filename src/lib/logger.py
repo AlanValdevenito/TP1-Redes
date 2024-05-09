@@ -22,7 +22,6 @@ class Logger:
             print(message)
 
     def log_rtt(self, rtt):
-        print("RTT:", rtt)
         if self.verbose:
             self.x_data.append(time.time())  # Add current time to x-axis data
             self.y_data.append(rtt)  # Add RTT value to y-axis data
