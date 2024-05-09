@@ -1,5 +1,6 @@
 from lib.client import Client
-from lib.config import IP, SERVER_PORT, PORT, STOP_AND_WAIT, UPLOAD, DOWNLOAD
+from lib.config import IP, SERVER_PORT, PORT
+from lib.config import STOP_AND_WAIT, UPLOAD, DOWNLOAD
 from lib.utils import parse_server_args
 import subprocess
 import time
@@ -26,9 +27,7 @@ def test(operation, protocol):
         size[f] = os.path.getsize(f)
 
     for f in files:
-
         client = Client(IP, PORT, args)
-        print(f"\nUpload & download tests:\n")
         start = time.time()
         if operation == UPLOAD:
             client.upload(f, f + f"_{operation}", SERVER_ADDRESS)
