@@ -1,6 +1,6 @@
-from lib.client import Client
-from lib.config import IP, SERVER_PORT, PORT, STOP_AND_WAIT, UPLOAD, DOWNLOAD
-from lib.utils import parse_server_args
+from src.lib.client import Client
+from src.lib.config import IP, SERVER_PORT, PORT, STOP_AND_WAIT, UPLOAD, DOWNLOAD
+from src.lib.utils import parse_server_args
 import subprocess
 import time
 import os
@@ -10,15 +10,15 @@ import numpy as np
 GO_BACK_N = '0'
 SERVER_ADDRESS = (IP, SERVER_PORT)
 N_CLIENTS = 3
-
-files = ['file.txt', 'file2.txt', 'file4.txt', 'file8.txt', 'file16.txt']
+NUMBER_OF_FILES = 5
+files = ['file1', 'file2', 'file4', 'file8', 'file16']
 
 
 def test(operation, protocol):
     args = parse_server_args()
     args.protocol = protocol
 
-    proc = subprocess.Popen(['python3', 'main_server.py', '-P', protocol])
+    proc = subprocess.Popen(['python3', 'start-server', '-P', protocol])
 
     times = []
     size = {}
@@ -26,23 +26,55 @@ def test(operation, protocol):
         size[f] = os.path.getsize(f)
 
     for f in files:
-        for i in range(1):
-            client = Client(IP, PORT + i, args)
-            print(f"\nUpload & download tests for client n°{i}:\n")
-            start = time.time()
-            if operation == UPLOAD:
-                client.upload(f, f + f"_{operation}_" + str(i), SERVER_ADDRESS)
-            elif operation == DOWNLOAD:
-                client.download(f + f"_{operation}_" + str(i),
-                                f, SERVER_ADDRESS)
-            time_elapsed = time.time() - start
-            times.append(time_elapsed)
+        
+        client = Client(IP, PORT, args)
+        print(f"\nUpload & download tests:\n")
+        start = time.time()
+        if operation == UPLOAD:
+            client.upload(f, f + f"_{operation}", SERVER_ADDRESS)
+        elif operation == DOWNLOAD:
+            client.download(f + f"_{operation}",
+                            f, SERVER_ADDRESS)
+        time_elapsed = time.time() - start
+        times.append(time_elapsed)
 
     os.system(f"kill {proc.pid}")
     return times
 
 
+def generate_files():
+    one_mb_of_data = "A" * 1024 * 1024
+    size = 1
+    for i in range(NUMBER_OF_FILES):
+        print(f"i = {i}")
+        with open(f"file{size}", "w") as f:
+            for _ in range(size):
+                f.write(one_mb_of_data)
+        with open(f"server_storage/file{size}", "w") as f:
+            for _ in range(size):
+                f.write(one_mb_of_data)
+        size = size * 2
+    
+def delete_files():
+    size = 1
+    for _ in range(NUMBER_OF_FILES):
+        filename = f"file{size}"
+        delete_file(filename)
+        delete_file(f"{filename}_download")
+        delete_file(f"server_storage/{filename}")
+        delete_file(f"server_storage/{filename}_upload")
+        size = size * 2
+    
+
+def delete_file(filename):
+    absolute_path = os.path.join(os.getcwd(), filename)
+    if os.path.exists(absolute_path):
+        os.remove(absolute_path)
+
+
+
 def main():
+    generate_files()
     results = {
         'upload': {
             'snw': test(UPLOAD, STOP_AND_WAIT),
@@ -70,6 +102,7 @@ def main():
         plt.xlabel("Tamaño del archivo (MB)")
         plt.ylabel("Tiempo de finalización (segundos)")
         plt.show()
+    delete_files()
 
 
 if __name__ == "__main__":
