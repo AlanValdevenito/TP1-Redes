@@ -1,7 +1,7 @@
 import argparse
-from lib.client import Client
-from lib.utils import check_client_args
-from lib.config import IP, SERVER_PORT, PORT, DOWNLOAD
+from src.lib.client import Client
+from src.lib.utils import check_client_args
+from src.lib.config import IP, SERVER_PORT, PORT, DOWNLOAD
 
 
 def parse_args():

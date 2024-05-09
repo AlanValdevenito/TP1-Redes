@@ -112,6 +112,7 @@ class Client:
         self.protocol.socket.settimeout(0.1)
 
         previous_seq_number = -1
+        connection_set_up = False
         with open(file_dst, 'wb') as f:
             while True:
                 try:
@@ -130,12 +131,16 @@ class Client:
                     if msg.sequence_number == previous_seq_number + 1:
                         f.write(msg.data)
                         previous_seq_number = msg.sequence_number
-
+                        connection_set_up = True
                         self.logger.log(colored("Writing data\n", "green"))
 
                 except TimeoutError:
                     self.protocol.send(request, server_address)
                     count += 1
+                    if count >= 10 and not connection_set_up:
+                        self.logger.log(
+                            colored("Error: Could not connect to server", "red"), True)
+                        break
                     continue
 
         self.protocol.close()
