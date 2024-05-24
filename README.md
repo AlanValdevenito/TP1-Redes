@@ -1,44 +1,76 @@
-# TP1 Redes
+# TP1 Redes - Grupo 6
 
-Trabajo practico basado en la implementacion de un File Transfer.
+Trabajo practico cuyo objetivo es la implementacion de un File Transfer.
 
-## Grupo 6
+## Integrantes
+
 - **Integrante 1** - [Alan Valdevenito](https://github.com/AlanValdevenito)
 - **Integrante 2** - [Mateo Julián Rico](https://github.com/ricomateo)
 - **Integrante 3** - [Mariana Galdo Martinez](https://github.com/marg30)
 - **Integrante 4** - [José Manuel Dieguez](https://github.com/jmdieguez)
 - **Integrante 5** - [Manuel Rivera Villatte](https://github.com/ManusaRivi)
 
-## Ejecucion de UPLOAD
+## Dependencias
 
-En una primera terminal ejecutar
+### Termcolor
 
-```
-$ ./start-server -P 1
-```
+1. Abrir una terminal
 
-En una segunda terminal ejecutar
+2. Ejecutar el siguiente comando:
 
 ```
-$ python3 upload -n result.txt -s seq.txt -P 1
+$ pip3 install termcolor
 ```
 
-Nota 1: Se debe generar el archivo seq.txt.
-Nota 2: Si se desea utilizar GBN se debe indicar con el flag '-P 2'.
+### Matplotlib
 
-## Ejecucion de DOWNLOAD
 
-En una primera terminal ejecutar
+1. Abrir una terminal
 
-```
-$ python3 start-server -P 1
-```
-
-En una segunda terminal ejecutar
+2. Ejecutar el siguiente comando:
 
 ```
-$ python3 download -d result.txt -n seq.txt -P 1
+$ pip3 install matplotlib
 ```
 
-Nota 1: Se debe generar el archivo seq.txt.
-Nota 2: Si se desea utilizar GBN se debe indicar con el flag '-P 2'.
+### Comcast
+
+En el siguiente repositorio se encuentran las instrucciones de instalación: https://github.com/tylertreat/comcast
+
+## Ejecucion
+
+### Comando UPLOAD
+
+1. Abrir dos terminales
+
+2. En la primer terminal ejecutar el siguiente comando:
+
+```
+$ python3 ./start-server -P <numeroProtocolo>
+```
+
+3. En la segunda terminal ejecutar el siguiente comando:
+
+```
+$ python3 upload -n <archivoResultado> -s <archivoParaSubir> -P <numeroProtocolo>
+```
+
+Nota: El protocolo Stop and Wait se indica con numero de protocolo igual a 1 y el protocolo GBN se indica con numero de protocolo igual a 2
+
+### Comando DOWNLOAD
+
+1. Abrir dos terminales
+
+2. En la primer terminal ejecutar el siguiente comando:
+
+```
+$ python3 start-server -P <numeroProtocolo>
+```
+
+3. En la segunda terminal ejecutar el siguiente comando:
+
+```
+$ python3 download -d <archivoResultado> -n <archivoParaDescargar> -P <numeroProtocolo>
+```
+
+Nota: El protocolo Stop and Wait se indica con numero de protocolo igual a 1 y el protocolo GBN se indica con numero de protocolo igual a 2
